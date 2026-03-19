@@ -208,8 +208,8 @@ export default function App() {
       { at: s * 0.90,      x: -1.5*m, y: 0,    z: 0,   scale: 1.5*m,  rotX: 0,    rotY: Math.PI * 2.65, rotZ: 0 },  // Leaving grip: moving center
       { at: s * 0.96,      x: -0.5*m, y: 0,    z: -0.5,scale: 1.0*m,  rotX: 0,    rotY: Math.PI * 2.8,  rotZ: 0 },  // Approaching: shrinking, staying level
       { at: pStart,                          x: 0, y: 0.2, z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0.05, rotY: Math.PI * 3,   rotZ: 0 },  // Arrives near pedestal
-      { at: Math.max(pStart, finalPedestalHold - 0.02), x: 0, y: 0,   z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0,    rotY: Math.PI * 3.6, rotZ: 0 },  // Ball holds on pedestal until sticky section ends
-      { at: finalPedestalHold,               x: 0, y: 10,  z: -1, scale: 0,    rotX: 0,    rotY: Math.PI * 3.7, rotZ: 0 },  // Gone after pedestal unpins
+      { at: pEnd,                            x: 0, y: 0,   z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0,    rotY: Math.PI * 3.6, rotZ: 0 },  // Ball stays same size, tracking moves it up
+      { at: Math.min(pEnd + 0.01, 1.0),     x: 0, y: 10,  z: -1, scale: 0,    rotX: 0,    rotY: Math.PI * 3.7, rotZ: 0 },  // Disappears after product section
       { at: 1.00,                           x: 0, y: 10,  z: -3, scale: 0,    rotX: 0,    rotY: Math.PI * 4.5, rotZ: 0 },  // Stay hidden
     ];
 
@@ -303,7 +303,7 @@ export default function App() {
           const vals = lerpKeyframes(self.progress);
 
           // During product section, track pedestal position (ball follows pedestal up)
-          if (self.progress >= pStart && self.progress <= finalPedestalHold) {
+          if (self.progress >= pStart && self.progress <= pEnd) {
             const pedestalScreenY = getPedestalScreenY(self.progress);
             const trackedY = screenYToThreeY(pedestalScreenY, vals.z);
             // Blend in tracking over first 25% of product section for smooth entry from below
@@ -332,7 +332,7 @@ export default function App() {
         const vals = lerpKeyframes(initialProgress);
 
         // Apply pedestal tracking if in product section
-        if (initialProgress >= pStart && initialProgress <= finalPedestalHold) {
+        if (initialProgress >= pStart && initialProgress <= pEnd) {
           const pedestalScreenY = getPedestalScreenY(initialProgress);
           const trackedY = screenYToThreeY(pedestalScreenY, vals.z);
           const blendIn = Math.min(1, (initialProgress - pStart) / ((pEnd - pStart) * 0.25));
