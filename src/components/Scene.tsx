@@ -71,16 +71,16 @@ function getRendererProfile(): RendererProfile {
     isMobile,
     isLowEndMobile,
     preferDesktopAssetsOnMobile: preferDesktopAssetsOnMobile,
-    antialias: !isLowEndMobile,
+    antialias: !isMobile || preferDesktopAssetsOnMobile,
     shadows: !isMobile || preferDesktopAssetsOnMobile,
     dpr: isMobile
-      ? (isLowEndMobile ? 1 : [isAppleMobile ? 1.35 : 1.2, Math.min(devicePixelRatio, preferDesktopAssetsOnMobile ? (isAppleMobile ? 2.5 : 2) : 1.5)])
+      ? (isLowEndMobile ? 1 : [isAppleMobile ? 1.25 : 1.0, Math.min(devicePixelRatio, preferDesktopAssetsOnMobile ? (isAppleMobile ? 2.5 : 2) : 1.25)])
       : [1, Math.min(devicePixelRatio, 2)],
     ambientIntensity: isMobile ? (isLowEndMobile ? 0.3 : (preferDesktopAssetsOnMobile ? 0.16 : 0.2)) : 0.15,
     envIntensity: isMobile ? (isLowEndMobile ? 0.08 : (preferDesktopAssetsOnMobile ? 0.3 : 0.22)) : 0.3,
     shadowMapSize: preferDesktopAssetsOnMobile ? 1024 : (isLowEndMobile ? 512 : 1024),
     showParticles: !isMobile,
-    showEnvironment: true,
+    showEnvironment: !isMobile || preferDesktopAssetsOnMobile,
   };
 }
 

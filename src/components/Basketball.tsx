@@ -106,7 +106,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 2 / maxDim;
     const premiumQuality = typeof window === 'undefined' || window.innerWidth >= 768 || shouldPreferDesktopAssetsOnMobile();
-    const anisotropy = Math.min(premiumQuality ? 16 : 12, gl.capabilities.getMaxAnisotropy());
+    const anisotropy = premiumQuality ? Math.min(16, gl.capabilities.getMaxAnisotropy()) : 2;
 
     cloned.position.sub(center);
     cloned.scale.setScalar(scale);
@@ -137,8 +137,8 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
             mesh.material.roughnessMap.minFilter = THREE.LinearMipmapLinearFilter;
             mesh.material.roughnessMap.magFilter = THREE.LinearFilter;
           }
-          mesh.material.roughness = Math.max(mesh.material.roughness, premiumQuality ? 0.55 : 0.6);
-          mesh.material.envMapIntensity = premiumQuality ? 0.9 : 0.6;
+          mesh.material.roughness = Math.max(mesh.material.roughness, premiumQuality ? 0.55 : 0.65);
+          mesh.material.envMapIntensity = premiumQuality ? 0.9 : 0.4;
           mesh.material.needsUpdate = true;
         }
       }
