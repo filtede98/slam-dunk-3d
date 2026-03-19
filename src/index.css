@@ -83,6 +83,10 @@
     will-change: transform;
     transform: translateZ(0);
   }
+
+  .scroll-section-feature {
+    min-height: 220vh !important;
+  }
 }
 
 /* Hero: centered flex */
