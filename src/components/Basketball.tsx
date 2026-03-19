@@ -113,6 +113,12 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     // Also collapse during add-to-cart animation
     const isAnimating = (window as any).__cartAnimating === true;
     const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    if (isMobileView && !isActive) {
+      wrapperRef.current.visible = false;
+      return;
+    }
+
     const carouselStrength = isActive ? 1 : (isMobileView || isAnimating ? 0 : Math.max(0, 1 - progress / 0.08));
 
     const targetX = xOffset * carouselStrength;
@@ -215,15 +221,16 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
 
     const s = state.current;
     const lerp = 0.25;
+    const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768;
 
     const progress = scrollProgress?.current ?? 0;
     const bobStrength = Math.max(0, 1 - progress / 0.15);
-    const bobHero = Math.sin(Date.now() * 0.002) * 0.12 * bobStrength;
+    const bobHero = isMobileView ? 0 : Math.sin(Date.now() * 0.002) * 0.12 * bobStrength;
 
     const bounceStrength = Math.max(0, (progress - 0.90) / 0.10);
     const bounceTime = Date.now() * 0.005;
     const rawBounce = Math.abs(Math.sin(bounceTime));
-    const bounceBall = rawBounce * rawBounce * 0.3 * bounceStrength;
+    const bounceBall = isMobileView ? 0 : rawBounce * rawBounce * 0.3 * bounceStrength;
 
     const bobY = bobHero + bounceBall;
 
@@ -251,16 +258,15 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
     sharedRotation.current.z = THREE.MathUtils.lerp(sharedRotation.current.z, targetRotZ, lerp);
   });
 
-  // Keep mobile variants mounted to avoid remount lag when the active variant changes.
+  // On mobile, render only the active variant to minimize scroll-time GPU cost.
   const variantsToRender = isMobileDevice
-    ? BALL_VARIANTS
+    ? BALL_VARIANTS.filter((_, i) => i === variantIndex)
     : BALL_VARIANTS;
 
   return (
     <group ref={groupRef}>
       {variantsToRender.map((variant) => {
         const i = BALL_VARIANTS.indexOf(variant);
-        const isVisibleVariant = isMobileDevice ? i === variantIndex : true;
         return (
           <BallModel
             key={variant.id}
@@ -268,7 +274,7 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
             xOffset={carouselData[i].xOffset}
             zOffset={carouselData[i].zOffset}
             scaleFactor={carouselData[i].scaleFactor}
-            isActive={isVisibleVariant}
+            isActive={i === variantIndex}
             scrollProgress={scrollProgress!}
             rotationRef={sharedRotation}
           />

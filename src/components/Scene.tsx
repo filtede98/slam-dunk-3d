@@ -51,7 +51,7 @@ function getRendererProfile(): RendererProfile {
     isLowEndMobile,
     antialias: !isMobile,
     shadows: !isMobile,
-    dpr: isMobile ? 1 : [1, Math.min(devicePixelRatio, 2)],
+    dpr: isMobile ? 0.8 : [1, Math.min(devicePixelRatio, 2)],
     ambientIntensity: isMobile ? 0.32 : 0.15,
     envIntensity: isMobile ? 0 : 0.3,
     shadowMapSize: isLowEndMobile ? 512 : 1024,
