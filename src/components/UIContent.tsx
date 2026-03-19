@@ -520,7 +520,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
           </h2>
         </div>
 
-        <div className="w-full max-w-md mb-24 reveal" style={{ transitionDelay: '0.1s' }}>
+        <div className="w-full max-w-md mb-24 animate-fade-in">
           <div className="relative">
             <input
               type="email"
