@@ -3,8 +3,8 @@ export const BALL_VARIANTS = [
     id: 'classic',
     name: 'Arancione Classico',
     color: 'bg-accent',
-    model: '/basketball_orange_new.glb',
-    desktopModel: '/basketball_orange_new.glb',
+    model: '/Orange_ball_new.glb',
+    desktopModel: '/Orange_ball_new.glb',
     mobileModel: '/basketball-opt-mobile.glb',
   },
   {
