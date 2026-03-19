@@ -234,20 +234,31 @@ export default function App() {
 
       // Smooth step for nicer transitions
       const smooth = t * t * (3 - 2 * t);
+      const motionT = isMobile ? t : smooth;
 
       return {
-        x: a.x + (b.x - a.x) * smooth,
-        y: a.y + (b.y - a.y) * smooth,
-        z: a.z + (b.z - a.z) * smooth,
-        scale: a.scale + (b.scale - a.scale) * smooth,
+        x: a.x + (b.x - a.x) * motionT,
+        y: a.y + (b.y - a.y) * motionT,
+        z: a.z + (b.z - a.z) * motionT,
+        scale: a.scale + (b.scale - a.scale) * motionT,
         rotX: a.rotX + (b.rotX - a.rotX) * smooth,
         rotY: a.rotY + (b.rotY - a.rotY) * smooth,
         rotZ: a.rotZ + (b.rotZ - a.rotZ) * smooth,
       };
     }
 
-    // Reference to the actual pedestal div for dynamic tracking
-    const pedestalEl = document.querySelector('#product-section .relative.w-64') || document.querySelector('#product-section .sticky-content');
+    let trackedPedestalCenterY = window.innerHeight * (isMobile ? 0.48 : 0.46);
+
+    const measurePedestalCenterY = () => {
+      const pedestalEl = document.querySelector('[data-pedestal-anchor="true"]') as HTMLElement | null;
+      if (!pedestalEl) return;
+
+      const rect = pedestalEl.getBoundingClientRect();
+      const isMobileView = window.innerWidth < 768;
+      trackedPedestalCenterY = rect.top + rect.height * (isMobileView ? 0.4 : 0.38);
+    };
+
+    measurePedestalCenterY();
 
     // Convert screen Y position to Three.js Y coordinate
     // Camera is at z=5, fov=45 degrees
@@ -274,12 +285,9 @@ export default function App() {
           const vals = lerpKeyframes(self.progress);
 
           // During product section, track pedestal position (ball follows pedestal up)
-          if (self.progress >= pStart && self.progress <= pEnd && pedestalEl) {
-            const rect = pedestalEl.getBoundingClientRect();
-            // Use the center of the pedestal div
+          if (self.progress >= pStart && self.progress <= pEnd) {
             const isMobileView = window.innerWidth < 768;
-            const pedestalCenterY = rect.top + rect.height * (isMobileView ? 0.40 : 0.38);
-            const trackedY = screenYToThreeY(pedestalCenterY, vals.z);
+            const trackedY = screenYToThreeY(trackedPedestalCenterY, vals.z);
             // Blend in tracking over first 25% of product section for smooth entry from below
             const blendIn = Math.min(1, (self.progress - pStart) / ((pEnd - pStart) * 0.25));
             const smoothBlend = blendIn * blendIn * (3 - 2 * blendIn); // smooth step
@@ -300,6 +308,7 @@ export default function App() {
 
       // Immediately set correct position based on current scroll (avoids invisible ball on load)
       requestAnimationFrame(() => {
+        measurePedestalCenterY();
         const scrollable = mainRef.current!.scrollHeight - window.innerHeight;
         const initialProgress = scrollable > 0 ? window.scrollY / scrollable : 0;
         scrollProgress.current = initialProgress;
@@ -313,9 +322,14 @@ export default function App() {
         ballState.current.rotZ = vals.rotZ;
         ballState.current.visible = true;
       });
+
+      window.addEventListener('resize', measurePedestalCenterY);
     }, mainRef);
 
-    return () => ctx.revert();
+    return () => {
+      window.removeEventListener('resize', measurePedestalCenterY);
+      ctx.revert();
+    };
   }, []);
 
   return (
