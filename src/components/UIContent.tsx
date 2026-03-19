@@ -257,7 +257,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
         </div>
 
         {/* Variant dots + swipe hint */}
-        <div className="hero-cta absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+        <div className="hero-cta absolute bottom-32 md:bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
           <span className="text-xs uppercase tracking-[0.3em] text-white/30 transition-all duration-500">
             {BALL_VARIANTS[variantIndex].name}
           </span>
@@ -281,7 +281,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
         </div>
 
         {/* Scroll indicator */}
-        <div className="scroll-indicator absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
+        <div className="scroll-indicator absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
           <span className="text-xs uppercase tracking-[0.3em]">Scorri</span>
           <ChevronDown className="w-5 h-5" />
         </div>
