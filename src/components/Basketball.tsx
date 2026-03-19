@@ -236,12 +236,17 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
 
     // Position & scale on the outer group (no rotation here)
     const g = groupRef.current;
-    g.position.x = THREE.MathUtils.lerp(g.position.x, s.x, lerp);
-    g.position.y = THREE.MathUtils.lerp(g.position.y, s.y + bobY, lerp);
-    g.position.z = THREE.MathUtils.lerp(g.position.z, s.z, lerp);
-
     const targetScale = s.scale || 1;
-    g.scale.setScalar(THREE.MathUtils.lerp(g.scale.x, targetScale, lerp));
+
+    if (isMobileView) {
+      g.position.set(s.x, s.y + bobY, s.z);
+      g.scale.setScalar(targetScale);
+    } else {
+      g.position.x = THREE.MathUtils.lerp(g.position.x, s.x, lerp);
+      g.position.y = THREE.MathUtils.lerp(g.position.y, s.y + bobY, lerp);
+      g.position.z = THREE.MathUtils.lerp(g.position.z, s.z, lerp);
+      g.scale.setScalar(THREE.MathUtils.lerp(g.scale.x, targetScale, lerp));
+    }
 
     g.visible = s.visible !== false;
 
