@@ -287,7 +287,8 @@ export default function App() {
 
           // During product section, track pedestal position (ball follows pedestal up)
           if (self.progress >= pStart && self.progress <= finalPedestalHold) {
-            const isMobileView = window.innerWidth < 768;
+            // Re-measure pedestal position every frame during product section
+            measurePedestalCenterY();
             const trackedY = screenYToThreeY(trackedPedestalCenterY, vals.z);
             // Blend in tracking over first 25% of product section for smooth entry from below
             const blendIn = Math.min(1, (self.progress - pStart) / ((pEnd - pStart) * 0.25));
