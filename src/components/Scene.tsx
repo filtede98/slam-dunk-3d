@@ -96,6 +96,45 @@ function useRendererProfile() {
   return profile;
 }
 
+function useMobileScrollActivity(isMobile: boolean) {
+  const [isScrollActive, setIsScrollActive] = useState(false);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsScrollActive(false);
+      return;
+    }
+
+    let settleTimer: number | null = null;
+
+    const markActive = () => {
+      setIsScrollActive(true);
+
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+
+      settleTimer = window.setTimeout(() => {
+        settleTimer = null;
+        setIsScrollActive(false);
+      }, 140);
+    };
+
+    window.addEventListener('scroll', markActive, { passive: true });
+    window.addEventListener('touchmove', markActive, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', markActive);
+      window.removeEventListener('touchmove', markActive);
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+    };
+  }, [isMobile]);
+
+  return isScrollActive;
+}
+
 function isMobileDebugEnabled() {
   if (typeof window === 'undefined') return false;
   return window.location.search.includes('mobileDebug=1') || window.localStorage.getItem('mobileDebug') === '1';
@@ -294,13 +333,18 @@ function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefO
 
 export default function Scene({ ballState, scrollProgress, activeVariant = 'classic', variantIndex = 0 }: SceneProps) {
   const profile = useRendererProfile();
+  const isScrollActive = useMobileScrollActivity(profile.isMobile);
+  const activeDpr = profile.isMobile && isScrollActive
+    ? (profile.preferDesktopAssetsOnMobile ? [1, 1.35] as [number, number] : 1)
+    : profile.dpr;
+  const activeShadows = profile.shadows && !(profile.isMobile && isScrollActive);
 
   return (
     <>
       <MobileDebugOverlay activeVariant={activeVariant} profile={profile} />
       <div className="canvas-container" aria-hidden="true">
         <Canvas
-          shadows={profile.shadows}
+          shadows={activeShadows}
           gl={{
             antialias: profile.antialias,
             alpha: true,
@@ -308,7 +352,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: profile.isMobile ? (profile.preferDesktopAssetsOnMobile ? 0.92 : 1) : 0.9,
           }}
-          dpr={profile.dpr}
+          dpr={activeDpr}
           frameloop={profile.isMobile ? 'demand' : 'always'}
           performance={{ min: profile.isLowEndMobile ? 0.6 : 0.8 }}
           style={{ background: 'transparent' }}
@@ -326,7 +370,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
               position={[4, 5, 4]}
               intensity={profile.isMobile ? (profile.isLowEndMobile ? 1.5 : (profile.preferDesktopAssetsOnMobile ? 1.8 : 1.75)) : 1.8}
               color="#FFAA66"
-              castShadow={profile.shadows}
+              castShadow={activeShadows}
               shadow-mapSize-width={profile.shadowMapSize}
               shadow-mapSize-height={profile.shadowMapSize}
             />

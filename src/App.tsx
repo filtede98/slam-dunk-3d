@@ -29,22 +29,6 @@ export default function App() {
 
   const cartIconRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || window.innerWidth >= 768) {
-      return;
-    }
-
-    const normalizer = ScrollTrigger.normalizeScroll(true);
-
-    return () => {
-      if (typeof normalizer === 'object' && normalizer && 'kill' in normalizer && typeof normalizer.kill === 'function') {
-        normalizer.kill();
-      } else {
-        ScrollTrigger.normalizeScroll(false);
-      }
-    };
-  }, []);
-
   const handleVariantChange = useCallback((variantId: string) => {
     const idx = BALL_VARIANTS.findIndex(v => v.id === variantId);
     if (idx >= 0) {
