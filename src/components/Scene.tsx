@@ -67,43 +67,40 @@ function CameraRig() {
   return null;
 }
 
-// Smart invalidator: pauses rendering during scroll, resumes after
-function ScrollInvalidator() {
+// Mobile invalidator: ZERO idle rendering, only render on scroll stop + variant change
+function MobileInvalidator() {
   const { invalidate } = useThree();
   useEffect(() => {
     let scrollTimer: ReturnType<typeof setTimeout> | null = null;
-    let isScrolling = false;
-    let idleInterval: ReturnType<typeof setInterval> | null = null;
-
-    const startIdleRender = () => {
-      if (idleInterval) return;
-      idleInterval = setInterval(() => invalidate(), 100); // ~10fps idle spin
-    };
-
-    const stopIdleRender = () => {
-      if (idleInterval) { clearInterval(idleInterval); idleInterval = null; }
-    };
 
     const onScroll = () => {
-      if (!isScrolling) {
-        isScrolling = true;
-        stopIdleRender(); // STOP rendering during scroll
-      }
       if (scrollTimer) clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => {
-        // Scroll stopped — render final position and resume idle
-        isScrolling = false;
+        // Scroll stopped — render ONE frame at final position
         invalidate();
-        startIdleRender();
-      }, 150);
+      }, 100);
+    };
+
+    // Variant change triggers render
+    const onVariantChange = () => {
+      // Render a few frames for the carousel animation
+      let count = 0;
+      const animate = () => {
+        invalidate();
+        if (++count < 20) requestAnimationFrame(animate); // ~20 frames for transition
+      };
+      animate();
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    startIdleRender(); // Start idle rendering
+    window.addEventListener('variant-changed', onVariantChange);
+
+    // Initial render
+    invalidate();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      stopIdleRender();
+      window.removeEventListener('variant-changed', onVariantChange);
       if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, [invalidate]);
@@ -130,7 +127,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
       >
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
         <CameraRig />
-        {isMobileCheck && <ScrollInvalidator />}
+        {isMobileCheck && <MobileInvalidator />}
 
         <Suspense fallback={null}>
           {/* Environment map for PBR reflections — skip on mobile for performance */}

@@ -29,7 +29,10 @@ export default function App() {
 
   const handleVariantChange = useCallback((variantId: string) => {
     const idx = BALL_VARIANTS.findIndex(v => v.id === variantId);
-    if (idx >= 0) setVariantIndex(idx);
+    if (idx >= 0) {
+      setVariantIndex(idx);
+      window.dispatchEvent(new Event('variant-changed'));
+    }
   }, []);
 
   const handleSwipeVariant = useCallback((direction: 'left' | 'right') => {
@@ -37,6 +40,7 @@ export default function App() {
       if (direction === 'left') return (prev + 1) % BALL_VARIANTS.length;
       return (prev - 1 + BALL_VARIANTS.length) % BALL_VARIANTS.length;
     });
+    window.dispatchEvent(new Event('variant-changed'));
   }, []);
 
   // Add-to-cart: ball flies to navbar hoop (top right)
