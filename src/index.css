@@ -65,6 +65,13 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 767px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
 }
 
 @media (max-width: 767px) {
