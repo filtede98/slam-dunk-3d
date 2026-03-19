@@ -204,11 +204,11 @@ export default function App() {
       { at: 0.00,                        x: 0,      y: isMobile ? 0.8 : 0,    z: -2,  scale: 1.6 * m,  rotX: 0.15, rotY: 0,             rotZ: 0 },   // Hero
       { at: s * (isMobile ? 0.06 : 0.12), x: 0.5*m,  y: isMobile ? 0.5 : 0,   z: -1.5,scale: 1.4 * m,  rotX: 0.1,  rotY: Math.PI * 0.2,  rotZ: 0 },  // Leaving hero: starts drifting right
       { at: s * (isMobile ? 0.13 : 0.22), x: 1.5*m,  y: 0.1,   z: -0.5,scale: 1.7 * m, rotX: 0.15, rotY: Math.PI * 0.5,  rotZ: 0 },  // Moving right
-      { at: s * (isMobile ? 0.22 : 0.36), x: 2.8*m,  y: 0.2,   z: 0.5, scale: 2.0*m,  rotX: 0.2,  rotY: Math.PI,        rotZ: 0 },  // Aero: far RIGHT
-      { at: s * 0.55,      x: 2.5*m,  y: 0,    z: 0.5, scale: 1.8*m,  rotX: 0.25, rotY: Math.PI * 1.5,  rotZ: 0 },  // Mid aero
-      { at: s * 0.75,      x: -2.8*m, y: 0.2,  z: 0.5, scale: 2.2*m,  rotX: 0,    rotY: Math.PI * 2,    rotZ: 0 },  // Grip: far LEFT
-      { at: s * 0.82,      x: -2.5*m, y: 0,    z: 0.5, scale: 2.0*m,  rotX:-0.1,  rotY: Math.PI * 2.5,  rotZ: 0 },  // Mid grip
-      { at: s * 0.90,      x: -1.5*m, y: 0,    z: 0,   scale: 1.5*m,  rotX: 0,    rotY: Math.PI * 2.65, rotZ: 0 },  // Leaving grip: moving center
+      { at: s * (isMobile ? 0.22 : 0.30), x: 2.8*m,  y: 0.2,   z: 0.5, scale: 2.0*m,  rotX: 0.2,  rotY: Math.PI,        rotZ: 0 },  // Aero: far RIGHT
+      { at: s * 0.45,      x: 2.5*m,  y: 0,    z: 0.5, scale: 1.8*m,  rotX: 0.25, rotY: Math.PI * 1.5,  rotZ: 0 },  // Mid aero
+      { at: s * 0.55,      x: -2.8*m, y: 0.2,  z: 0.5, scale: 2.2*m,  rotX: 0,    rotY: Math.PI * 2,    rotZ: 0 },  // Grip: far LEFT
+      { at: s * 0.72,      x: -2.5*m, y: 0,    z: 0.5, scale: 2.0*m,  rotX:-0.1,  rotY: Math.PI * 2.5,  rotZ: 0 },  // Mid grip
+      { at: s * 0.85,      x: -1.5*m, y: 0,    z: 0,   scale: 1.5*m,  rotX: 0,    rotY: Math.PI * 2.65, rotZ: 0 },  // Leaving grip: moving center
       { at: s * 0.96,      x: -0.5*m, y: 0,    z: -0.5,scale: 1.0*m,  rotX: 0,    rotY: Math.PI * 2.8,  rotZ: 0 },  // Approaching: shrinking, staying level
       { at: pStart,                          x: 0, y: 0.2, z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0.05, rotY: Math.PI * 3,   rotZ: 0 },  // Arrives near pedestal
       { at: stickyUnpin,                    x: 0, y: 0,   z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0,    rotY: Math.PI * 3.5, rotZ: 0 },  // Ball on pedestal until sticky unpins
