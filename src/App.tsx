@@ -207,6 +207,7 @@ export default function App() {
     const stickyUnpin = productEl
       ? (productEl.offsetTop + productHeight - window.innerHeight) / scrollable
       : pEnd;
+    const finalPedestalHold = Math.max(pStart, Math.min(stickyUnpin, pEnd));
 
     // Pre-product keyframes are proportional to pStart
     const s = pStart; // scale factor for pre-product sections
@@ -223,8 +224,8 @@ export default function App() {
       { at: s * 0.90,      x: -1.5*m, y: 0,    z: 0,   scale: 1.5*m,  rotX: 0,    rotY: Math.PI * 2.65, rotZ: 0 },  // Leaving grip: moving center
       { at: s * 0.96,      x: -0.5*m, y: 0,    z: -0.5,scale: 1.0*m,  rotX: 0,    rotY: Math.PI * 2.8,  rotZ: 0 },  // Approaching: shrinking, staying level
       { at: pStart,                          x: 0, y: 0.2, z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0.05, rotY: Math.PI * 3,   rotZ: 0 },  // Arrives near pedestal
-      { at: pEnd - 0.02,                    x: 0, y: 0,   z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0,    rotY: Math.PI * 3.6, rotZ: 0 },  // Ball follows pedestal up
-      { at: pEnd,                           x: 0, y: 10,  z: -1, scale: 0,    rotX: 0,    rotY: Math.PI * 3.7, rotZ: 0 },  // Gone — hidden before footer
+      { at: Math.max(pStart, finalPedestalHold - 0.02), x: 0, y: 0,   z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0,    rotY: Math.PI * 3.6, rotZ: 0 },  // Ball holds on pedestal until sticky section ends
+      { at: finalPedestalHold,               x: 0, y: 10,  z: -1, scale: 0,    rotX: 0,    rotY: Math.PI * 3.7, rotZ: 0 },  // Gone after pedestal unpins
       { at: 1.00,                           x: 0, y: 10,  z: -3, scale: 0,    rotX: 0,    rotY: Math.PI * 4.5, rotZ: 0 },  // Stay hidden
     ];
 
@@ -301,7 +302,7 @@ export default function App() {
           const vals = lerpKeyframes(self.progress);
 
           // During product section, track pedestal position (ball follows pedestal up)
-          if (self.progress >= pStart && self.progress <= pEnd) {
+          if (self.progress >= pStart && self.progress <= finalPedestalHold) {
             const isMobileView = window.innerWidth < 768;
             const trackedY = screenYToThreeY(trackedPedestalCenterY, vals.z);
             // Blend in tracking over first 25% of product section for smooth entry from below
