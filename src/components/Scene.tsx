@@ -250,16 +250,18 @@ function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefO
         }
 
         const now = performance.now();
-        const progress = scrollProgress?.current ?? 0;
-        const keepHeroAlive = progress <= 0.08;
 
-        if (now < activeUntil || keepHeroAlive) {
+        if (now < activeUntil) {
+          // During burst: render every frame (60fps)
           frameId = window.requestAnimationFrame(tick);
           return;
         }
 
-        frameId = null;
-        setFrameloop('demand');
+        // Idle: render at ~20fps for idle rotation
+        frameId = window.setTimeout(() => {
+          invalidate();
+          frameId = window.requestAnimationFrame(tick);
+        }, 50) as unknown as number;
       };
 
       setFrameloop('always');
@@ -320,6 +322,7 @@ function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefO
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
+        window.clearTimeout(frameId);
       }
       if (settleTimer !== null) {
         window.clearTimeout(settleTimer);
