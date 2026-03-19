@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'meshoptimizer';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
 import { BALL_VARIANTS } from '../constants';
 
@@ -42,7 +42,9 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
   const currentScale = useRef(isActive ? scaleFactor : 0);
 
   const gltf = useLoader(GLTFLoader, url, (loader) => {
-    loader.setMeshoptDecoder(MeshoptDecoder);
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    loader.setDRACOLoader(dracoLoader);
   });
 
   const scene = useMemo(() => {
