@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { AdaptiveDpr, Environment, PerspectiveCamera } from '@react-three/drei';
 import Basketball, { BallState } from './Basketball';
-import { Suspense, useRef, useMemo } from 'react';
+import { Suspense, useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
 interface SceneProps {
@@ -52,11 +52,12 @@ function Particles({ count = 80 }) {
   );
 }
 
-// Dynamic camera rig with mouse tracking
+// Dynamic camera rig with mouse tracking (desktop only)
 function CameraRig() {
   const { camera } = useThree();
 
   useFrame((state) => {
+    if (isMobileCheck) return; // Skip on mobile — no mouse, saves CPU
     const { x, y } = state.pointer;
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, x * 0.3, 0.02);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, y * 0.2, 0.02);
@@ -66,41 +67,68 @@ function CameraRig() {
   return null;
 }
 
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+// Invalidate canvas on scroll so demand mode re-renders
+function ScrollInvalidator() {
+  const { invalidate } = useThree();
+  useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          invalidate();
+          ticking = false;
+        });
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // Also invalidate periodically for idle spin
+    const interval = setInterval(() => invalidate(), isMobileCheck ? 50 : 16);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearInterval(interval);
+    };
+  }, [invalidate]);
+  return null;
+}
+
+const isMobileCheck = typeof window !== 'undefined' && window.innerWidth < 768;
 
 export default function Scene({ ballState, scrollProgress, activeVariant = 'classic', variantIndex = 0 }: SceneProps) {
   return (
     <div className="canvas-container" aria-hidden="true">
       <Canvas
-        shadows={!isMobile}
+        shadows={!isMobileCheck}
         gl={{
-          antialias: !isMobile,
+          antialias: !isMobileCheck,
           alpha: true,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 0.9,
         }}
-        dpr={isMobile ? [1, 1.5] : [1, 2]}
+        dpr={isMobileCheck ? [1, 1] : [1, 2]}
+        frameloop={isMobileCheck ? 'demand' : 'always'}
         style={{ background: 'transparent' }}
       >
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
         <CameraRig />
+        {isMobileCheck && <ScrollInvalidator />}
 
         <Suspense fallback={null}>
           {/* Environment map for PBR reflections — skip on mobile for performance */}
-          {!isMobile && <Environment preset="studio" environmentIntensity={0.3} />}
+          {!isMobileCheck && <Environment preset="studio" environmentIntensity={0.3} />}
 
           {/* Ambient — slightly stronger on mobile to compensate no env map */}
-          <ambientLight intensity={isMobile ? 0.35 : 0.15} />
+          <ambientLight intensity={isMobileCheck ? 0.35 : 0.15} />
 
           {/* Key light — warm, from front-right, not too strong */}
           <directionalLight
             position={[4, 5, 4]}
             intensity={1.8}
             color="#FFAA66"
-            castShadow={!isMobile}
-            shadow-mapSize-width={isMobile ? 512 : 1024}
-            shadow-mapSize-height={isMobile ? 512 : 1024}
+            castShadow={!isMobileCheck}
+            shadow-mapSize-width={isMobileCheck ? 512 : 1024}
+            shadow-mapSize-height={isMobileCheck ? 512 : 1024}
           />
 
           {/* Fill light — very subtle, from the left */}
@@ -114,7 +142,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
           <pointLight position={[-2, 3, -5]} intensity={3} color="#FF4400" />
 
           <Basketball state={ballState} scrollProgress={scrollProgress} activeVariant={activeVariant} variantIndex={variantIndex} />
-          {!isMobile && <Particles />}
+          {!isMobileCheck && <Particles />}
 
           <AdaptiveDpr pixelated />
         </Suspense>
