@@ -257,11 +257,11 @@ function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefO
           return;
         }
 
-        // Idle: render at ~20fps for idle rotation
+        // Idle: render at ~30fps for smooth idle rotation
         frameId = window.setTimeout(() => {
           invalidate();
           frameId = window.requestAnimationFrame(tick);
-        }, 50) as unknown as number;
+        }, 33) as unknown as number;
       };
 
       setFrameloop('always');
