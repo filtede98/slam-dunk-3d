@@ -87,11 +87,11 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
         <CameraRig />
 
         <Suspense fallback={null}>
-          {/* Environment map for PBR reflections — low intensity for drama */}
-          <Environment preset="studio" environmentIntensity={0.3} />
+          {/* Environment map for PBR reflections — skip on mobile for performance */}
+          {!isMobile && <Environment preset="studio" environmentIntensity={0.3} />}
 
-          {/* Low ambient — keeps it moody */}
-          <ambientLight intensity={0.15} />
+          {/* Ambient — slightly stronger on mobile to compensate no env map */}
+          <ambientLight intensity={isMobile ? 0.35 : 0.15} />
 
           {/* Key light — warm, from front-right, not too strong */}
           <directionalLight

@@ -204,20 +204,29 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
     sharedRotation.current.z = THREE.MathUtils.lerp(sharedRotation.current.z, targetRotZ, lerp);
   });
 
+  // On mobile, only render the active ball (saves ~15MB of model loading)
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  const variantsToRender = isMobileDevice
+    ? BALL_VARIANTS.filter((_, i) => i === variantIndex)
+    : BALL_VARIANTS;
+
   return (
     <group ref={groupRef}>
-      {BALL_VARIANTS.map((variant, i) => (
-        <BallModel
-          key={variant.id}
-          url={variant.model}
-          xOffset={carouselData[i].xOffset}
-          zOffset={carouselData[i].zOffset}
-          scaleFactor={carouselData[i].scaleFactor}
-          isActive={i === variantIndex}
-          scrollProgress={scrollProgress!}
-          rotationRef={sharedRotation}
-        />
-      ))}
+      {variantsToRender.map((variant) => {
+        const i = BALL_VARIANTS.indexOf(variant);
+        return (
+          <BallModel
+            key={variant.id}
+            url={variant.model}
+            xOffset={carouselData[i].xOffset}
+            zOffset={carouselData[i].zOffset}
+            scaleFactor={carouselData[i].scaleFactor}
+            isActive={i === variantIndex}
+            scrollProgress={scrollProgress!}
+            rotationRef={sharedRotation}
+          />
+        );
+      })}
     </group>
   );
 }
