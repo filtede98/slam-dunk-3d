@@ -440,11 +440,9 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
 
           {/* Ball pedestal area — transparent so 3D ball shows through */}
           <div data-pedestal-anchor="true" className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center my-2">
-            {/* Pedestal glow */}
+            {/* Pedestal base line only */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] h-[2px] bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
             <div className="absolute bottom-0 left-1/2 hidden h-16 w-[60%] -translate-x-1/2 rounded-full bg-accent/[0.06] blur-2xl md:block" />
-            {/* Subtle arc lines */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[80%] h-[40%] border border-white/[0.04] rounded-t-full border-b-0" />
           </div>
 
           {/* Variant name */}
