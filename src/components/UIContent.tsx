@@ -205,7 +205,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
         style={{ touchAction: 'pan-y' }}
       >
         {/* Radial glow behind the ball */}
-        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-[#FF4D00]/[0.06] blur-[120px] rounded-full pointer-events-none z-0 hidden md:block" />
+        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-[#FF4D00]/[0.06] blur-[120px] rounded-full pointer-events-none z-0" />
 
         {/* Swipe arrows near ball — mobile only */}
         <div className="md:hidden absolute top-[30%] left-4 z-20 flex flex-col items-center gap-1 animate-[swipeLeft_1.5s_ease-in-out_infinite]">
@@ -288,7 +288,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 2: AERODYNAMICS ═══════════ */}
-      <section id="aero-section" className="scroll-section min-h-[130vh] md:min-h-[400vh]">
+      <section id="aero-section" className="scroll-section" style={{ minHeight: '400vh' }}>
         <div className="sticky-content">
         <div className="grid md:grid-cols-2 gap-16 items-center w-full">
           <div className="max-w-xl">
@@ -350,7 +350,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 3: GRIP / MATERIAL ═══════════ */}
-      <section id="grip-section" className="scroll-section min-h-[130vh] md:min-h-[400vh]">
+      <section id="grip-section" className="scroll-section" style={{ minHeight: '400vh' }}>
         <div className="sticky-content">
         <div className="grid md:grid-cols-2 gap-16 items-center w-full">
           {/* Left side empty for ball */}
@@ -423,7 +423,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 4: PRODUCT SHOWCASE ═══════════ */}
-      <section id="product-section" className="scroll-section text-center bg-transparent min-h-[140vh] md:min-h-[280vh]">
+      <section id="product-section" className="scroll-section text-center bg-transparent" style={{ minHeight: '280vh' }}>
         <div className="sticky-content flex flex-col items-center justify-center">
 
           {/* Top: title & badge */}
@@ -513,7 +513,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 5: FOOTER ═══════════ */}
-      <footer id="footer-section" className="scroll-section text-center bg-transparent min-h-[130vh] md:min-h-[250vh]">
+      <footer id="footer-section" className="scroll-section text-center bg-transparent" style={{ minHeight: '250vh' }}>
         <div className="sticky-content flex-col items-center justify-center pt-32 md:pt-48 pb-20">
         <div className="parallax-text">
           <h2 className="text-6xl md:text-[clamp(4rem,10vw,10rem)] leading-[0.9] mb-14 reveal">
