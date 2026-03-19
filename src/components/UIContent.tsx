@@ -288,7 +288,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 2: AERODYNAMICS ═══════════ */}
-      <section id="aero-section" className="scroll-section" style={{ minHeight: '320vh' }}>
+      <section id="aero-section" className="scroll-section" style={{ minHeight: '350vh' }}>
         <div className="sticky-content">
         <div className="grid md:grid-cols-2 gap-16 items-center w-full">
           <div className="max-w-xl">
@@ -350,7 +350,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 3: GRIP / MATERIAL ═══════════ */}
-      <section id="grip-section" className="scroll-section" style={{ minHeight: '320vh' }}>
+      <section id="grip-section" className="scroll-section" style={{ minHeight: '350vh' }}>
         <div className="sticky-content">
         <div className="grid md:grid-cols-2 gap-16 items-center w-full">
           {/* Left side empty for ball */}
