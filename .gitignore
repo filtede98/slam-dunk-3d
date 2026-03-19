@@ -1,0 +1,12 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+Palla Arancione.glb
+Palla Blu.glb
+Palla Nera.glb
+Palla Verde.glb

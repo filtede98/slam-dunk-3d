@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Bebas Neue", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
+
+  --color-accent: #FF4D00;
+  --color-accent-light: #FF6B2C;
+  --color-card: #0A0A0A;
+  --color-muted: #666666;
+}
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-black text-white font-sans overflow-x-hidden;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display uppercase;
+  }
+
+  ::selection {
+    background: rgba(255, 77, 0, 0.3);
+    color: white;
+  }
+}
+
+/* Canvas container — fixed behind everything */
+.canvas-container {
+  @apply fixed inset-0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Section layout */
+.content-section {
+  @apply relative z-20 px-6 md:px-12;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Scrollable sections with sticky content */
+.scroll-section {
+  @apply relative z-20 px-6 md:px-12;
+  min-height: 180vh;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scroll-section > .sticky-content {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+/* Hero: centered flex */
+#hero-section {
+  @apply flex flex-col justify-center items-center;
+}
+
+/* Footer */
+#footer-section {
+  @apply flex flex-col justify-center items-center;
+}
+
+/* Text readability over 3D scene */
+.content-section h1,
+.content-section h2 {
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.9), 0 0 80px rgba(0, 0, 0, 0.7);
+}
+
+.content-section p {
+  text-shadow: 0 1px 20px rgba(0, 0, 0, 0.8);
+}
+
+/* Hero specific — stronger contrast */
+#hero-section {
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 1), 0 0 120px rgba(0, 0, 0, 0.8);
+}
+
+/* Product card — hidden until GSAP reveal, GPU layer for backdrop-filter */
+.product-card {
+  opacity: 0;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+}
+
+/* Cart badge ping animation */
+@keyframes ping-once {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.8); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Swipe hint arrows — mobile only */
+@keyframes swipeLeft {
+  0%, 100% { transform: translateX(0); opacity: 0.3; }
+  50% { transform: translateX(-6px); opacity: 0.7; }
+}
+@keyframes swipeRight {
+  0%, 100% { transform: translateX(0); opacity: 0.3; }
+  50% { transform: translateX(6px); opacity: 0.7; }
+}
+
+.animate-ping-once {
+  animation: ping-once 0.5s ease-out;
+}
+
+/* Smooth cursor for the whole page */
+* {
+  cursor: default;
+}
+
+a, button, input, [role="button"] {
+  cursor: pointer;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 77, 0, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 77, 0, 0.6);
+}
