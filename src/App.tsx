@@ -9,6 +9,8 @@ import { BALL_VARIANTS } from './constants';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const MOBILE_VARIANT_RENDER_DURATION = 600;
+
 export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
   const ballState = useRef<BallState>({
@@ -31,7 +33,9 @@ export default function App() {
     const idx = BALL_VARIANTS.findIndex(v => v.id === variantId);
     if (idx >= 0) {
       setVariantIndex(idx);
-      window.dispatchEvent(new Event('variant-changed'));
+      window.dispatchEvent(new CustomEvent('variant-changed', {
+        detail: { durationMs: MOBILE_VARIANT_RENDER_DURATION },
+      }));
     }
   }, []);
 
@@ -40,7 +44,9 @@ export default function App() {
       if (direction === 'left') return (prev + 1) % BALL_VARIANTS.length;
       return (prev - 1 + BALL_VARIANTS.length) % BALL_VARIANTS.length;
     });
-    window.dispatchEvent(new Event('variant-changed'));
+    window.dispatchEvent(new CustomEvent('variant-changed', {
+      detail: { durationMs: MOBILE_VARIANT_RENDER_DURATION },
+    }));
   }, []);
 
   // Add-to-cart: ball flies to navbar hoop (top right)

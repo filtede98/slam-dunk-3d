@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as THREE from 'three';
@@ -24,6 +24,10 @@ interface BasketballProps {
   variantIndex?: number;
 }
 
+function getVariantModel(variant: (typeof BALL_VARIANTS)[number], isMobile: boolean) {
+  return isMobile ? variant.mobileModel ?? variant.model : variant.desktopModel ?? variant.model;
+}
+
 // Individual ball model — each has its own position offset, scale, opacity, and rotation
 function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgress, rotationRef }: {
   url: string;
@@ -36,6 +40,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
 }) {
   const wrapperRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
+  const { gl } = useThree();
   // Non-active balls start hidden to avoid flash on reload
   const currentX = useRef(isActive ? xOffset : 0);
   const currentZ = useRef(isActive ? zOffset : 0);
@@ -43,7 +48,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
 
   const gltf = useLoader(GLTFLoader, url, (loader) => {
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    dracoLoader.setDecoderPath('/draco/');
     loader.setDRACOLoader(dracoLoader);
   });
 
@@ -54,6 +59,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 2 / maxDim;
+    const anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
 
     cloned.position.sub(center);
     cloned.scale.setScalar(scale);
@@ -63,6 +69,10 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
         const mesh = child as THREE.Mesh;
         mesh.castShadow = true;
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
+          mesh.material.map && (mesh.material.map.anisotropy = anisotropy);
+          mesh.material.normalMap && (mesh.material.normalMap.anisotropy = anisotropy);
+          mesh.material.metalnessMap && (mesh.material.metalnessMap.anisotropy = anisotropy);
+          mesh.material.roughnessMap && (mesh.material.roughnessMap.anisotropy = anisotropy);
           mesh.material.roughness = Math.max(mesh.material.roughness, 0.6);
           mesh.material.envMapIntensity = 0.5;
           mesh.material.needsUpdate = true;
@@ -71,7 +81,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     });
 
     return cloned;
-  }, [gltf]);
+  }, [gl, gltf]);
 
   useEffect(() => {
     if (!spinRef.current) return;
@@ -80,6 +90,17 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     }
     spinRef.current.add(scene);
   }, [scene]);
+
+  useEffect(() => {
+    const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (!isMobileView) {
+      return;
+    }
+
+    currentX.current = isActive ? xOffset : 0;
+    currentZ.current = isActive ? zOffset : 0;
+    currentScale.current = isActive ? scaleFactor : 0;
+  }, [isActive, scaleFactor, xOffset, zOffset]);
 
   useFrame(() => {
     if (!wrapperRef.current || !spinRef.current) return;
@@ -106,6 +127,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     wrapperRef.current.position.x = currentX.current;
     wrapperRef.current.position.z = currentZ.current;
     wrapperRef.current.scale.setScalar(currentScale.current);
+    wrapperRef.current.visible = !isMobileView || isActive || currentScale.current > 0.001;
 
     // Apply shared rotation to each ball individually
     if (rotationRef.current) {
@@ -135,11 +157,34 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
   const idleRotY = useRef(0);
   // Shared rotation target — each BallModel reads from this
   const sharedRotation = useRef({ x: 0, y: 0, z: 0 });
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const modelUrls = useMemo(() =>
-    BALL_VARIANTS.map(v => v.model),
-    []
+    BALL_VARIANTS.map(v => getVariantModel(v, isMobileDevice)),
+    [isMobileDevice]
   );
+
+  useEffect(() => {
+    modelUrls.forEach((url) => {
+      useLoader.preload(GLTFLoader, url, (loader) => {
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('/draco/');
+        loader.setDRACOLoader(dracoLoader);
+      });
+    });
+  }, [modelUrls]);
+
+  useEffect(() => {
+    if (!groupRef.current || !state.current) return;
+
+    const s = state.current;
+    groupRef.current.position.set(s.x, s.y, s.z);
+    groupRef.current.scale.setScalar(s.scale || 1);
+    groupRef.current.visible = s.visible !== false;
+    sharedRotation.current.x = s.rotX;
+    sharedRotation.current.y = s.rotY;
+    sharedRotation.current.z = s.rotZ;
+  }, [state]);
 
   // Calculate turntable carousel offsets — balls on a circle in XZ plane
   const carouselData = useMemo(() => {
@@ -206,24 +251,24 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
     sharedRotation.current.z = THREE.MathUtils.lerp(sharedRotation.current.z, targetRotZ, lerp);
   });
 
-  // On mobile, only render the active ball (saves ~15MB of model loading)
-  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  // Keep mobile variants mounted to avoid remount lag when the active variant changes.
   const variantsToRender = isMobileDevice
-    ? BALL_VARIANTS.filter((_, i) => i === variantIndex)
+    ? BALL_VARIANTS
     : BALL_VARIANTS;
 
   return (
     <group ref={groupRef}>
       {variantsToRender.map((variant) => {
         const i = BALL_VARIANTS.indexOf(variant);
+        const isVisibleVariant = isMobileDevice ? i === variantIndex : true;
         return (
           <BallModel
             key={variant.id}
-            url={variant.model}
+            url={modelUrls[i]}
             xOffset={carouselData[i].xOffset}
             zOffset={carouselData[i].zOffset}
             scaleFactor={carouselData[i].scaleFactor}
-            isActive={i === variantIndex}
+            isActive={isVisibleVariant}
             scrollProgress={scrollProgress!}
             rotationRef={sharedRotation}
           />
