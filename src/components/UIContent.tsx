@@ -202,6 +202,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
         className="content-section text-center items-center justify-center"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
+        style={{ touchAction: 'pan-y' }}
       >
         {/* Radial glow behind the ball */}
         <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-[#FF4D00]/[0.06] blur-[120px] rounded-full pointer-events-none z-0" />

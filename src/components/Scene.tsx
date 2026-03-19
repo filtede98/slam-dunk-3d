@@ -62,58 +62,6 @@ function getRendererProfile(): RendererProfile {
   };
 }
 
-// Mobile: render on demand — throttled during scroll, burst on variant change
-function MobileInvalidator() {
-  const { invalidate } = useThree();
-  useEffect(() => {
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
-    let lastScrollRender = 0;
-
-    const onScroll = () => {
-      // Throttle: max 1 render per 200ms during scroll
-      const now = Date.now();
-      if (now - lastScrollRender > 200) {
-        lastScrollRender = now;
-        invalidate();
-      }
-      if (scrollTimer) clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => invalidate(), 150); // Final frame on scroll stop
-    };
-
-    const onVariantChange = (e: Event) => {
-      const duration = (e as CustomEvent).detail?.durationMs ?? 400;
-      const frames = Math.ceil(duration / 50); // ~20fps for transition
-      let count = 0;
-      const animate = () => {
-        invalidate();
-        if (++count < frames) requestAnimationFrame(animate);
-      };
-      animate();
-    };
-
-    const onCartAnim = () => {
-      // Continuous rendering during cart animation
-      let running = true;
-      const animate = () => { if (running) { invalidate(); requestAnimationFrame(animate); } };
-      animate();
-      setTimeout(() => { running = false; }, 2000);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('variant-changed', onVariantChange);
-    window.addEventListener('add-to-cart', onCartAnim);
-    invalidate(); // Initial render
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('variant-changed', onVariantChange);
-      window.removeEventListener('add-to-cart', onCartAnim);
-      if (scrollTimer) clearTimeout(scrollTimer);
-    };
-  }, [invalidate]);
-  return null;
-}
-
 function useRendererProfile() {
   const [profile, setProfile] = useState<RendererProfile>(() => getRendererProfile());
 
@@ -235,13 +183,12 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
             toneMappingExposure: profile.isMobile ? 1 : 0.9,
           }}
           dpr={profile.dpr}
-          frameloop={profile.isMobile ? 'demand' : 'always'}
+            frameloop="always"
           performance={{ min: profile.isLowEndMobile ? 0.6 : 0.8 }}
           style={{ background: 'transparent' }}
         >
           <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
           <CameraRig isMobile={profile.isMobile} />
-          {profile.isMobile && <MobileInvalidator />}
 
           <Suspense fallback={null}>
             {profile.showEnvironment && <Environment preset="studio" environmentIntensity={profile.envIntensity} />}

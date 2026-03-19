@@ -268,7 +268,7 @@ export default function App() {
         trigger: mainRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: window.innerWidth < 768 ? 0.3 : 0.1,
+        scrub: window.innerWidth < 768 ? true : 0.1,
         onUpdate: (self) => {
           scrollProgress.current = self.progress;
           const vals = lerpKeyframes(self.progress);
