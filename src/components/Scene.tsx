@@ -166,6 +166,109 @@ function CameraRig({ isMobile }: { isMobile: boolean }) {
   return null;
 }
 
+function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefObject<number> }) {
+  const { invalidate, setFrameloop } = useThree();
+
+  useEffect(() => {
+    let frameId: number | null = null;
+    let settleTimer: number | null = null;
+    let activeUntil = 0;
+
+    const ensureLoop = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      const tick = () => {
+        invalidate();
+
+        if (document.visibilityState !== 'visible') {
+          frameId = null;
+          return;
+        }
+
+        const now = performance.now();
+        const progress = scrollProgress?.current ?? 0;
+        const keepHeroAlive = progress <= 0.08;
+
+        if (now < activeUntil || keepHeroAlive) {
+          frameId = window.requestAnimationFrame(tick);
+          return;
+        }
+
+        frameId = null;
+        setFrameloop('demand');
+      };
+
+      setFrameloop('always');
+      frameId = window.requestAnimationFrame(tick);
+    };
+
+    const startBurst = (durationMs: number) => {
+      activeUntil = Math.max(activeUntil, performance.now() + durationMs);
+      ensureLoop();
+
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+
+      settleTimer = window.setTimeout(() => {
+        settleTimer = null;
+        invalidate();
+      }, durationMs + 32);
+    };
+
+    const onScroll = () => startBurst(180);
+    const onTouchMove = () => startBurst(180);
+    const onResize = () => startBurst(240);
+    const onVariantChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ durationMs?: number }>;
+      startBurst(customEvent.detail?.durationMs ?? 500);
+    };
+    const onCartAnimation = () => startBurst(1800);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startBurst(240);
+      } else {
+        if (frameId !== null) {
+          window.cancelAnimationFrame(frameId);
+          frameId = null;
+        }
+        setFrameloop('demand');
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('resize', onResize);
+    window.addEventListener('variant-changed', onVariantChange);
+    window.addEventListener('add-to-cart', onCartAnimation);
+    window.addEventListener('fly-to-cart', onCartAnimation);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    startBurst(320);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('variant-changed', onVariantChange);
+      window.removeEventListener('add-to-cart', onCartAnimation);
+      window.removeEventListener('fly-to-cart', onCartAnimation);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+      setFrameloop('demand');
+    };
+  }, [invalidate, scrollProgress, setFrameloop]);
+
+  return null;
+}
+
 export default function Scene({ ballState, scrollProgress, activeVariant = 'classic', variantIndex = 0 }: SceneProps) {
   const profile = useRendererProfile();
 
@@ -183,12 +286,13 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
             toneMappingExposure: profile.isMobile ? 1 : 0.9,
           }}
           dpr={profile.dpr}
-            frameloop="always"
+          frameloop={profile.isMobile ? 'demand' : 'always'}
           performance={{ min: profile.isLowEndMobile ? 0.6 : 0.8 }}
           style={{ background: 'transparent' }}
         >
           <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
           <CameraRig isMobile={profile.isMobile} />
+          {profile.isMobile && <MobileFrameController scrollProgress={scrollProgress} />}
 
           <Suspense fallback={null}>
             {profile.showEnvironment && <Environment preset="studio" environmentIntensity={profile.envIntensity} />}
