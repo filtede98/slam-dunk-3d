@@ -247,8 +247,9 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             </button>
             <button
-              onClick={handleAddToCart}
+              onPointerUp={(e) => { e.stopPropagation(); handleAddToCart(); }}
               className="hero-cta px-8 py-4 border border-white/15 hover:border-white/40 text-white font-bold rounded-full transition-all duration-300 hover:scale-105 hover:bg-white/5"
+              style={{ touchAction: 'manipulation' }}
             >
               AGGIUNGI AL CARRELLO — 149,99€
             </button>
@@ -498,8 +499,10 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
             </div>
 
             <button
-              onClick={handleAddToCart}
+              onPointerUp={(e) => { e.stopPropagation(); handleAddToCart(); }}
+              onTouchEnd={(e) => { e.stopPropagation(); }}
               className="group w-full py-4 bg-accent hover:bg-accent-light text-white font-bold rounded-2xl transition-all duration-300 hover:scale-[1.02] relative overflow-hidden"
+              style={{ touchAction: 'manipulation' }}
             >
               <span className="relative z-10 text-sm tracking-wider">AGGIUNGI AL CARRELLO</span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
