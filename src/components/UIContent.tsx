@@ -219,7 +219,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
           </svg>
         </div>
 
-        <div className="relative z-10 max-w-5xl pt-32 md:pt-0">
+        <div className="relative z-10 max-w-5xl pt-16 md:pt-0">
           <div className="overflow-hidden mb-1">
             <h1 className="text-[clamp(3.5rem,11vw,9rem)] leading-[0.85] tracking-tighter">
               <span className="hero-word inline-block">SLAM</span>{' '}
