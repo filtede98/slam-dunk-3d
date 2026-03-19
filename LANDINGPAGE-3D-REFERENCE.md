@@ -492,7 +492,85 @@ Il sito e` attualmente in **italiano**. Testi da tradurre per altre lingue:
 
 ---
 
-## 13. Checklist per Nuove Landing Page
+## 13. Ottimizzazione Performance Mobile
+
+### 13.1 Rendering e Frame Loop
+
+Il rendering WebGL compete con lo scroll sul main thread mobile. Soluzioni:
+
+**MobileFrameController (Scene.tsx):**
+- `frameloop="demand"` su mobile (non renderizza a 60fps costanti)
+- Burst rendering attivato solo durante: scroll, touchmove, resize, cambio variante, animazioni carrello
+- Torna a demand quando non serve piu` renderizzare
+
+**Degradazione temporanea durante scroll:**
+```
+Scroll attivo → DPR ridotto + ombre disattivate
+Scroll fermo  → Qualita` piena ripristinata
+```
+
+### 13.2 Asset Split Desktop/Mobile
+
+In `constants.ts` separare i path dei modelli:
+```typescript
+{
+  id: 'classic',
+  name: 'Arancione Classico',
+  model: '/basketball-opt.glb',          // fallback
+  desktopModel: '/basketball-opt.glb',   // full quality
+  mobileModel: '/basketball-opt-mobile.glb', // decimated
+}
+```
+
+**Modelli mobile:**
+- Decimate in Blender (ratio 0.1-0.2)
+- Target: < 500KB per modello
+- Dispositivi premium Apple: usano modelli desktop
+
+### 13.3 Profili Dispositivo (Scene.tsx)
+
+| Profilo | DPR | Antialias | Ombre | Environment | Modelli |
+|---|---|---|---|---|---|
+| Desktop | deviceDPR | si` | si` | studio | desktop |
+| Mobile Premium (iPhone Pro) | deviceDPR | si` | si` | studio | desktop |
+| Mobile Standard | 1.5 | no | no | nessuno | mobile |
+| Mobile Low-end | 1.0 | no | no | nessuno | mobile |
+
+### 13.4 Loader e Decoder
+
+- **Draco decoder locale** in `public/draco/` (non dipendere da CDN esterni)
+- **Preload** dei modelli per cambi variante istantanei
+- **Solo modello attivo** caricato su mobile (non tutti e 4)
+
+### 13.5 CSS Mobile Performance
+
+Ridurre/rimuovere su mobile durante scroll:
+- `backdrop-blur` nella navbar
+- `backdrop-blur` nella card prodotto
+- Glow div enormi con blur alto
+- Usare `transform: translateZ(0)` e `-webkit-backface-visibility: hidden` sui layer
+
+In `index.css`:
+```css
+@media (max-width: 768px) {
+  .canvas-container { will-change: auto; }
+  .sticky-content { -webkit-overflow-scrolling: touch; }
+}
+```
+
+Sulla hero: `touch-action: pan-y` per migliorare scroll verticale.
+
+### 13.6 Texture e Materiali
+
+- `anisotropy` alta per nitidezza su Retina
+- `envMapIntensity` piu` alta per profili premium
+- Filtri texture espliciti: `LinearMipmapLinearFilter` + `LinearFilter`
+- `roughness` >= 0.6
+- `receiveShadow` solo su device compatibili
+
+---
+
+## 14. Checklist per Nuove Landing Page
 
 - [ ] Setup: Vite + React + Three.js + GSAP + Tailwind
 - [ ] Canvas fisso (z-10) + contenuto scrollabile (z-20)
@@ -520,3 +598,12 @@ Il sito e` attualmente in **italiano**. Testi da tradurre per altre lingue:
 - [ ] Grip section allineata a destra su mobile
 - [ ] Linee decorative accorciate su mobile (max-w-[60%])
 - [ ] Localizzazione: tutti i testi in italiano
+- [ ] Mobile: MobileFrameController con frameloop="demand"
+- [ ] Mobile: degradazione DPR/ombre durante scroll attivo
+- [ ] Mobile: asset split desktop/mobile (Blender decimate ratio 0.1-0.2)
+- [ ] Mobile: Draco decoder locale in public/draco/
+- [ ] Mobile: profili dispositivo (premium/standard/low-end)
+- [ ] Mobile: rimuovere backdrop-blur durante scroll
+- [ ] Mobile: touch-action: pan-y sulla hero
+- [ ] Mobile: preload solo modello attivo (non tutti)
+- [ ] Mobile: texture con anisotropy e filtri espliciti
