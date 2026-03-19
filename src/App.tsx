@@ -256,7 +256,7 @@ export default function App() {
       const pedestalRect = pedestalEl.getBoundingClientRect();
       const stickyRect = stickyContent.getBoundingClientRect();
       const isMobileView = window.innerWidth < 768;
-      pedestalOffsetInSticky = (pedestalRect.top - stickyRect.top) + pedestalRect.height * (isMobileView ? 0.52 : 0.48);
+      pedestalOffsetInSticky = (pedestalRect.top - stickyRect.top) + pedestalRect.height * (isMobileView ? 0.56 : 0.52);
     }
 
     // Calculate pedestal screen Y based on scroll progress (no DOM read during scroll)
