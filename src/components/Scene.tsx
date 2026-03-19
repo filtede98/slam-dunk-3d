@@ -67,26 +67,44 @@ function CameraRig() {
   return null;
 }
 
-// Invalidate canvas on scroll so demand mode re-renders
+// Smart invalidator: pauses rendering during scroll, resumes after
 function ScrollInvalidator() {
   const { invalidate } = useThree();
   useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(() => {
-          invalidate();
-          ticking = false;
-        });
-      }
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    let isScrolling = false;
+    let idleInterval: ReturnType<typeof setInterval> | null = null;
+
+    const startIdleRender = () => {
+      if (idleInterval) return;
+      idleInterval = setInterval(() => invalidate(), 100); // ~10fps idle spin
     };
+
+    const stopIdleRender = () => {
+      if (idleInterval) { clearInterval(idleInterval); idleInterval = null; }
+    };
+
+    const onScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        stopIdleRender(); // STOP rendering during scroll
+      }
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        // Scroll stopped — render final position and resume idle
+        isScrolling = false;
+        invalidate();
+        startIdleRender();
+      }, 150);
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    // Also invalidate periodically for idle spin
-    const interval = setInterval(() => invalidate(), isMobileCheck ? 50 : 16);
+    startIdleRender(); // Start idle rendering
+
     return () => {
       window.removeEventListener('scroll', onScroll);
-      clearInterval(interval);
+      stopIdleRender();
+      if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, [invalidate]);
   return null;
