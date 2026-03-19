@@ -36,7 +36,12 @@
 
 /* Canvas container — fixed behind everything */
 .canvas-container {
-  @apply fixed inset-0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100lvh;
   z-index: 10;
   pointer-events: none;
 }
@@ -117,6 +122,7 @@
   opacity: 0;
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* Cart badge ping animation */

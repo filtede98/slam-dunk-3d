@@ -80,7 +80,7 @@ function getRendererProfile(): RendererProfile {
     envIntensity: isMobile ? (isLowEndMobile ? 0.08 : (preferDesktopAssetsOnMobile ? 0.3 : 0.22)) : 0.3,
     shadowMapSize: preferDesktopAssetsOnMobile ? 1024 : (isLowEndMobile ? 512 : 1024),
     showParticles: !isMobile,
-    showEnvironment: !isMobile || preferDesktopAssetsOnMobile,
+    showEnvironment: true,
   };
 }
 
