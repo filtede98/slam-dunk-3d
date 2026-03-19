@@ -235,13 +235,20 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
   );
 
   useEffect(() => {
-    modelUrls.forEach((url) => {
-      useLoader.preload(GLTFLoader, url, (loader) => {
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('/draco/');
-        loader.setDRACOLoader(dracoLoader);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const delay = isMobile ? 3500 : 0;
+
+    const timeout = setTimeout(() => {
+      modelUrls.forEach((url) => {
+        useLoader.preload(GLTFLoader, url, (loader) => {
+          const dracoLoader = new DRACOLoader();
+          dracoLoader.setDecoderPath('/draco/');
+          loader.setDRACOLoader(dracoLoader);
+        });
       });
-    });
+    }, delay);
+
+    return () => clearTimeout(timeout);
   }, [modelUrls]);
 
   useEffect(() => {
