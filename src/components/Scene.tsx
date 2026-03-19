@@ -334,9 +334,7 @@ function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefO
 export default function Scene({ ballState, scrollProgress, activeVariant = 'classic', variantIndex = 0 }: SceneProps) {
   const profile = useRendererProfile();
   const isScrollActive = useMobileScrollActivity(profile.isMobile);
-  const activeDpr = profile.isMobile && isScrollActive
-    ? (profile.preferDesktopAssetsOnMobile ? [1, 1.35] as [number, number] : 1)
-    : profile.dpr;
+  const activeDpr = profile.dpr; // No DPR degradation during scroll — too visible
   const activeShadows = profile.shadows && !(profile.isMobile && isScrollActive);
 
   return (
