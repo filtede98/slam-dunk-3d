@@ -24,8 +24,37 @@ interface BasketballProps {
   variantIndex?: number;
 }
 
+function shouldPreferDesktopAssetsOnMobile() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const isMobile = window.innerWidth < 768;
+  if (!isMobile) {
+    return false;
+  }
+
+  const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  const hardwareConcurrency = navigator.hardwareConcurrency ?? 4;
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const hasKnownLowMemory = typeof deviceMemory === 'number' && deviceMemory <= 3;
+  const hasLowCpu = hardwareConcurrency <= 4;
+
+  if (hasKnownLowMemory || hasLowCpu) {
+    return false;
+  }
+
+  return devicePixelRatio >= 3 || hardwareConcurrency >= 6 || (typeof deviceMemory === 'number' && deviceMemory >= 6);
+}
+
 function getVariantModel(variant: (typeof BALL_VARIANTS)[number], isMobile: boolean) {
-  return isMobile ? variant.mobileModel ?? variant.model : variant.desktopModel ?? variant.model;
+  if (!isMobile) {
+    return variant.desktopModel ?? variant.model;
+  }
+
+  return shouldPreferDesktopAssetsOnMobile()
+    ? variant.desktopModel ?? variant.model
+    : variant.mobileModel ?? variant.model;
 }
 
 // Individual ball model — each has its own position offset, scale, opacity, and rotation
@@ -59,7 +88,8 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 2 / maxDim;
-    const anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
+    const prefersDesktopAssets = shouldPreferDesktopAssetsOnMobile();
+    const anisotropy = Math.min(prefersDesktopAssets ? 16 : 12, gl.capabilities.getMaxAnisotropy());
 
     cloned.position.sub(center);
     cloned.scale.setScalar(scale);
@@ -73,8 +103,8 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
           mesh.material.normalMap && (mesh.material.normalMap.anisotropy = anisotropy);
           mesh.material.metalnessMap && (mesh.material.metalnessMap.anisotropy = anisotropy);
           mesh.material.roughnessMap && (mesh.material.roughnessMap.anisotropy = anisotropy);
-          mesh.material.roughness = Math.max(mesh.material.roughness, 0.6);
-          mesh.material.envMapIntensity = 0.5;
+          mesh.material.roughness = Math.max(mesh.material.roughness, prefersDesktopAssets ? 0.55 : 0.6);
+          mesh.material.envMapIntensity = prefersDesktopAssets ? 0.75 : 0.6;
           mesh.material.needsUpdate = true;
         }
       }

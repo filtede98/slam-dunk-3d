@@ -14,6 +14,7 @@ interface SceneProps {
 interface RendererProfile {
   isMobile: boolean;
   isLowEndMobile: boolean;
+  preferDesktopAssetsOnMobile: boolean;
   antialias: boolean;
   shadows: boolean;
   dpr: number | [number, number];
@@ -29,6 +30,7 @@ function getRendererProfile(): RendererProfile {
     return {
       isMobile: false,
       isLowEndMobile: false,
+      preferDesktopAssetsOnMobile: false,
       antialias: true,
       shadows: true,
       dpr: [1, 2],
@@ -41,24 +43,31 @@ function getRendererProfile(): RendererProfile {
   }
 
   const isMobile = window.innerWidth < 768;
-  const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
+  const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
   const hardwareConcurrency = navigator.hardwareConcurrency ?? 4;
   const devicePixelRatio = window.devicePixelRatio || 1;
-  const isLowEndMobile = isMobile && (deviceMemory <= 4 || hardwareConcurrency <= 4);
+  const hasKnownLowMemory = typeof deviceMemory === 'number' && deviceMemory <= 3;
+  const hasKnownStrongMemory = typeof deviceMemory === 'number' && deviceMemory >= 6;
+  const hasLowCpu = hardwareConcurrency <= 4;
+  const hasStrongCpu = hardwareConcurrency >= 6;
+  const hasStrongDisplay = devicePixelRatio >= 3;
+  const isLowEndMobile = isMobile && (hasLowCpu || hasKnownLowMemory);
+  const preferDesktopAssetsOnMobile = isMobile && !isLowEndMobile && (hasStrongCpu || hasStrongDisplay || hasKnownStrongMemory);
 
   return {
     isMobile,
     isLowEndMobile,
+    preferDesktopAssetsOnMobile: preferDesktopAssetsOnMobile,
     antialias: !isLowEndMobile,
     shadows: !isMobile,
     dpr: isMobile
-      ? (isLowEndMobile ? 0.9 : [1, Math.min(devicePixelRatio, 1.25)])
+      ? (isLowEndMobile ? 1 : [1.15, Math.min(devicePixelRatio, preferDesktopAssetsOnMobile ? 1.75 : 1.5)])
       : [1, Math.min(devicePixelRatio, 2)],
-    ambientIntensity: isMobile ? (isLowEndMobile ? 0.34 : 0.24) : 0.15,
-    envIntensity: isMobile ? (isLowEndMobile ? 0 : 0.18) : 0.3,
+    ambientIntensity: isMobile ? (isLowEndMobile ? 0.3 : 0.2) : 0.15,
+    envIntensity: isMobile ? (isLowEndMobile ? 0.08 : (preferDesktopAssetsOnMobile ? 0.28 : 0.22)) : 0.3,
     shadowMapSize: isLowEndMobile ? 512 : 1024,
     showParticles: !isMobile,
-    showEnvironment: !isLowEndMobile,
+    showEnvironment: true,
   };
 }
 
@@ -107,6 +116,7 @@ function MobileDebugOverlay({
       <div>memory: {String(deviceMemory)}</div>
       <div>cores: {String(hardwareConcurrency)}</div>
       <div>low-end: {profile.isLowEndMobile ? 'yes' : 'no'}</div>
+      <div>desktop-assets: {profile.preferDesktopAssetsOnMobile ? 'yes' : 'no'}</div>
     </div>
   );
 }
@@ -301,7 +311,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
 
             <directionalLight
               position={[4, 5, 4]}
-              intensity={profile.isMobile ? (profile.isLowEndMobile ? 1.45 : 1.6) : 1.8}
+              intensity={profile.isMobile ? (profile.isLowEndMobile ? 1.5 : 1.75) : 1.8}
               color="#FFAA66"
               castShadow={profile.shadows}
               shadow-mapSize-width={profile.shadowMapSize}
