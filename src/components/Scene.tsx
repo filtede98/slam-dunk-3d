@@ -49,14 +49,16 @@ function getRendererProfile(): RendererProfile {
   return {
     isMobile,
     isLowEndMobile,
-    antialias: !isMobile,
+    antialias: !isLowEndMobile,
     shadows: !isMobile,
-    dpr: isMobile ? 0.8 : [1, Math.min(devicePixelRatio, 2)],
-    ambientIntensity: isMobile ? 0.32 : 0.15,
-    envIntensity: isMobile ? 0 : 0.3,
+    dpr: isMobile
+      ? (isLowEndMobile ? 0.9 : [1, Math.min(devicePixelRatio, 1.25)])
+      : [1, Math.min(devicePixelRatio, 2)],
+    ambientIntensity: isMobile ? (isLowEndMobile ? 0.34 : 0.24) : 0.15,
+    envIntensity: isMobile ? (isLowEndMobile ? 0 : 0.18) : 0.3,
     shadowMapSize: isLowEndMobile ? 512 : 1024,
     showParticles: !isMobile,
-    showEnvironment: !isMobile,
+    showEnvironment: !isLowEndMobile,
   };
 }
 
@@ -195,7 +197,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
 
             <directionalLight
               position={[4, 5, 4]}
-              intensity={profile.isMobile ? 1.5 : 1.8}
+              intensity={profile.isMobile ? (profile.isLowEndMobile ? 1.45 : 1.6) : 1.8}
               color="#FFAA66"
               castShadow={profile.shadows}
               shadow-mapSize-width={profile.shadowMapSize}
@@ -208,7 +210,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
               color="#FF9955"
             />
 
-            <pointLight position={[-2, 3, -5]} intensity={profile.isMobile ? 2.4 : 3} color="#FF4400" />
+            <pointLight position={[-2, 3, -5]} intensity={profile.isMobile ? (profile.isLowEndMobile ? 2.1 : 2.6) : 3} color="#FF4400" />
 
             <Basketball state={ballState} scrollProgress={scrollProgress} activeVariant={activeVariant} variantIndex={variantIndex} />
             {profile.showParticles && <Particles />}
