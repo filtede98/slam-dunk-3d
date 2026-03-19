@@ -307,8 +307,9 @@ export default function App() {
           if (self.progress >= pStart && self.progress <= stickyUnpin + 0.02) {
             const pedestalScreenY = getPedestalScreenY(self.progress);
             const trackedY = screenYToThreeY(pedestalScreenY, vals.z);
-            // Blend in tracking over first 25% of product section for smooth entry from below
-            const blendIn = Math.min(1, (self.progress - pStart) / ((pEnd - pStart) * 0.25));
+            // Blend in tracking over first 15% of product-to-unpin range
+            const trackRange = stickyUnpin - pStart;
+            const blendIn = Math.min(1, (self.progress - pStart) / (trackRange * 0.15));
             const smoothBlend = blendIn * blendIn * (3 - 2 * blendIn); // smooth step
             vals.y = vals.y * (1 - smoothBlend) + trackedY * smoothBlend;
           }
@@ -336,7 +337,8 @@ export default function App() {
         if (initialProgress >= pStart && initialProgress <= stickyUnpin + 0.02) {
           const pedestalScreenY = getPedestalScreenY(initialProgress);
           const trackedY = screenYToThreeY(pedestalScreenY, vals.z);
-          const blendIn = Math.min(1, (initialProgress - pStart) / ((pEnd - pStart) * 0.25));
+          const trackRange = stickyUnpin - pStart;
+          const blendIn = Math.min(1, (initialProgress - pStart) / (trackRange * 0.15));
           const smoothBlend = blendIn * blendIn * (3 - 2 * blendIn);
           vals.y = vals.y * (1 - smoothBlend) + trackedY * smoothBlend;
         }
