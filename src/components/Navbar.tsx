@@ -12,11 +12,18 @@ export default function Navbar({ cartIconRef }: NavbarProps) {
   // menuOpen state removed — no nav menu
   const lastScrollY = useRef(0);
   const [hidden, setHidden] = useState(false);
+  const forceVisible = useRef(false);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
       setScrolled(currentY > 50);
+
+      // Don't hide if force-visible (during add-to-cart animation)
+      if (forceVisible.current) {
+        lastScrollY.current = currentY;
+        return;
+      }
 
       // Hide on scroll down, show on scroll up
       if (currentY > lastScrollY.current && currentY > 300) {
@@ -30,9 +37,13 @@ export default function Navbar({ cartIconRef }: NavbarProps) {
     const handleAddToCart = () => {
       setCartCount((prev) => prev + 1);
       setCartBounce(true);
-      // Force navbar visible so the hoop is on screen
+      // Force navbar visible and lock it for the animation duration
       setHidden(false);
-      setTimeout(() => setCartBounce(false), 600);
+      forceVisible.current = true;
+      setTimeout(() => {
+        forceVisible.current = false;
+        setCartBounce(false);
+      }, 2500); // Keep visible for full animation duration
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
