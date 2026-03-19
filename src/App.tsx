@@ -207,9 +207,9 @@ export default function App() {
       { at: s * (isMobile ? 0.22 : 0.28), x: 2.8*m,  y: 0.2,   z: 0.5, scale: 2.0*m,  rotX: 0.2,  rotY: Math.PI,        rotZ: 0 },  // Aero: arrives RIGHT
       { at: s * 0.42,      x: 2.6*m,  y: 0.1,  z: 0.5, scale: 1.9*m,  rotX: 0.22, rotY: Math.PI * 1.3,  rotZ: 0 },  // Aero: stays RIGHT (long hold)
       { at: s * 0.48,      x: -2.8*m, y: 0.2,  z: 0.5, scale: 2.2*m,  rotX: 0,    rotY: Math.PI * 2,    rotZ: 0 },  // Grip: arrives LEFT
-      { at: s * 0.68,      x: -2.6*m, y: 0.1,  z: 0.5, scale: 2.1*m,  rotX:-0.05, rotY: Math.PI * 2.3,  rotZ: 0 },  // Grip: stays LEFT (long hold)
-      { at: s * 0.82,      x: -1.5*m, y: 0,    z: 0,   scale: 1.5*m,  rotX: 0,    rotY: Math.PI * 2.65, rotZ: 0 },  // Leaving grip: moving center
-      { at: s * 0.96,      x: -0.5*m, y: 0,    z: -0.5,scale: 1.0*m,  rotX: 0,    rotY: Math.PI * 2.8,  rotZ: 0 },  // Approaching: shrinking, staying level
+      { at: s * 0.75,      x: -2.6*m, y: 0.1,  z: 0.5, scale: 2.1*m,  rotX:-0.05, rotY: Math.PI * 2.3,  rotZ: 0 },  // Grip: stays LEFT (long hold)
+      { at: s * 0.88,      x: -1.0*m, y: 0,    z: -0.3,scale: 1.2*m,  rotX: 0,    rotY: Math.PI * 2.7,  rotZ: 0 },  // Quick exit from grip
+      { at: s * 0.97,      x: -0.2*m, y: 0,    z: -0.7,scale: 0.8*m,  rotX: 0,    rotY: Math.PI * 2.9,  rotZ: 0 },  // Fast approach to pedestal
       { at: pStart,                          x: 0, y: 0.2, z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0.05, rotY: Math.PI * 3,   rotZ: 0 },  // Arrives near pedestal
       { at: stickyUnpin,                    x: 0, y: 0,   z: -1, scale: isMobile ? 0.45 : 0.5,  rotX: 0,    rotY: Math.PI * 3.5, rotZ: 0 },  // Ball on pedestal until sticky unpins
       { at: stickyUnpin + 0.01,             x: 0, y: 3,   z: -1, scale: 0.2,  rotX: 0,    rotY: Math.PI * 3.55, rotZ: 0 },  // Rising with pedestal, shrinking
