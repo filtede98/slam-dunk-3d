@@ -25,6 +25,18 @@ interface RendererProfile {
   showEnvironment: boolean;
 }
 
+function isAppleMobileDevice() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform;
+  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
+
+  return /iPhone|iPad|iPod/i.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1);
+}
+
 function getRendererProfile(): RendererProfile {
   if (typeof window === 'undefined') {
     return {
@@ -46,13 +58,14 @@ function getRendererProfile(): RendererProfile {
   const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
   const hardwareConcurrency = navigator.hardwareConcurrency ?? 4;
   const devicePixelRatio = window.devicePixelRatio || 1;
+  const isAppleMobile = isMobile && isAppleMobileDevice();
   const hasKnownLowMemory = typeof deviceMemory === 'number' && deviceMemory <= 3;
   const hasKnownStrongMemory = typeof deviceMemory === 'number' && deviceMemory >= 6;
   const hasLowCpu = hardwareConcurrency <= 4;
   const hasStrongCpu = hardwareConcurrency >= 6;
   const hasStrongDisplay = devicePixelRatio >= 3;
-  const isLowEndMobile = isMobile && (hasLowCpu || hasKnownLowMemory);
-  const preferDesktopAssetsOnMobile = isMobile && !isLowEndMobile && (hasStrongCpu || hasStrongDisplay || hasKnownStrongMemory);
+  const isLowEndMobile = isMobile && !isAppleMobile && (hasLowCpu || hasKnownLowMemory);
+  const preferDesktopAssetsOnMobile = isMobile && (isAppleMobile ? hasStrongDisplay : (!isLowEndMobile && (hasStrongCpu || hasStrongDisplay || hasKnownStrongMemory)));
 
   return {
     isMobile,
@@ -61,7 +74,7 @@ function getRendererProfile(): RendererProfile {
     antialias: !isLowEndMobile,
     shadows: !isMobile || preferDesktopAssetsOnMobile,
     dpr: isMobile
-      ? (isLowEndMobile ? 1 : [1.2, Math.min(devicePixelRatio, preferDesktopAssetsOnMobile ? 2 : 1.5)])
+      ? (isLowEndMobile ? 1 : [isAppleMobile ? 1.35 : 1.2, Math.min(devicePixelRatio, preferDesktopAssetsOnMobile ? (isAppleMobile ? 2.5 : 2) : 1.5)])
       : [1, Math.min(devicePixelRatio, 2)],
     ambientIntensity: isMobile ? (isLowEndMobile ? 0.3 : (preferDesktopAssetsOnMobile ? 0.16 : 0.2)) : 0.15,
     envIntensity: isMobile ? (isLowEndMobile ? 0.08 : (preferDesktopAssetsOnMobile ? 0.3 : 0.22)) : 0.3,

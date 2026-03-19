@@ -24,6 +24,18 @@ interface BasketballProps {
   variantIndex?: number;
 }
 
+function isAppleMobileDevice() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform;
+  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
+
+  return /iPhone|iPad|iPod/i.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1);
+}
+
 function shouldPreferDesktopAssetsOnMobile() {
   if (typeof window === 'undefined') {
     return false;
@@ -37,11 +49,16 @@ function shouldPreferDesktopAssetsOnMobile() {
   const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
   const hardwareConcurrency = navigator.hardwareConcurrency ?? 4;
   const devicePixelRatio = window.devicePixelRatio || 1;
+  const isAppleMobile = isAppleMobileDevice();
   const hasKnownLowMemory = typeof deviceMemory === 'number' && deviceMemory <= 3;
   const hasLowCpu = hardwareConcurrency <= 4;
 
-  if (hasKnownLowMemory || hasLowCpu) {
+  if (!isAppleMobile && (hasKnownLowMemory || hasLowCpu)) {
     return false;
+  }
+
+  if (isAppleMobile) {
+    return devicePixelRatio >= 3;
   }
 
   return devicePixelRatio >= 3 || hardwareConcurrency >= 6 || (typeof deviceMemory === 'number' && deviceMemory >= 6);
@@ -100,10 +117,26 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          mesh.material.map && (mesh.material.map.anisotropy = anisotropy);
-          mesh.material.normalMap && (mesh.material.normalMap.anisotropy = anisotropy);
-          mesh.material.metalnessMap && (mesh.material.metalnessMap.anisotropy = anisotropy);
-          mesh.material.roughnessMap && (mesh.material.roughnessMap.anisotropy = anisotropy);
+          if (mesh.material.map) {
+            mesh.material.map.anisotropy = anisotropy;
+            mesh.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+            mesh.material.map.magFilter = THREE.LinearFilter;
+          }
+          if (mesh.material.normalMap) {
+            mesh.material.normalMap.anisotropy = anisotropy;
+            mesh.material.normalMap.minFilter = THREE.LinearMipmapLinearFilter;
+            mesh.material.normalMap.magFilter = THREE.LinearFilter;
+          }
+          if (mesh.material.metalnessMap) {
+            mesh.material.metalnessMap.anisotropy = anisotropy;
+            mesh.material.metalnessMap.minFilter = THREE.LinearMipmapLinearFilter;
+            mesh.material.metalnessMap.magFilter = THREE.LinearFilter;
+          }
+          if (mesh.material.roughnessMap) {
+            mesh.material.roughnessMap.anisotropy = anisotropy;
+            mesh.material.roughnessMap.minFilter = THREE.LinearMipmapLinearFilter;
+            mesh.material.roughnessMap.magFilter = THREE.LinearFilter;
+          }
           mesh.material.roughness = Math.max(mesh.material.roughness, premiumQuality ? 0.55 : 0.6);
           mesh.material.envMapIntensity = premiumQuality ? 0.9 : 0.6;
           mesh.material.needsUpdate = true;
