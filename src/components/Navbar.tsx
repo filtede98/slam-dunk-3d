@@ -50,7 +50,7 @@ export default function Navbar({ cartIconRef }: NavbarProps) {
         hidden ? '-translate-y-full' : 'translate-y-0'
       } ${
         scrolled
-          ? 'bg-black/80 backdrop-blur-sm md:backdrop-blur-xl py-4 border-b border-white/[0.06]'
+          ? 'bg-black/88 backdrop-blur-none md:bg-black/80 md:backdrop-blur-xl py-4 border-b border-white/[0.06]'
           : 'bg-transparent py-6 md:py-8'
       }`}
     >

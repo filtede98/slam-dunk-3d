@@ -67,6 +67,19 @@
   align-items: center;
 }
 
+@media (max-width: 767px) {
+  .canvas-container {
+    contain: layout style paint;
+    transform: translateZ(0);
+  }
+
+  .scroll-section > .sticky-content,
+  nav {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+}
+
 /* Hero: centered flex */
 #hero-section {
   @apply flex flex-col justify-center items-center;

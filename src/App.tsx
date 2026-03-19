@@ -29,6 +29,22 @@ export default function App() {
 
   const cartIconRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.innerWidth >= 768) {
+      return;
+    }
+
+    const normalizer = ScrollTrigger.normalizeScroll(true);
+
+    return () => {
+      if (typeof normalizer === 'object' && normalizer && 'kill' in normalizer && typeof normalizer.kill === 'function') {
+        normalizer.kill();
+      } else {
+        ScrollTrigger.normalizeScroll(false);
+      }
+    };
+  }, []);
+
   const handleVariantChange = useCallback((variantId: string) => {
     const idx = BALL_VARIANTS.findIndex(v => v.id === variantId);
     if (idx >= 0) {
@@ -351,8 +367,8 @@ export default function App() {
 
       {/* Ambient background glow */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-[#FF4D00]/[0.04] blur-[120px] rounded-full" />
-        <div className="absolute bottom-1/4 right-1/4 w-[30vw] h-[30vh] bg-[#FF4D00]/[0.02] blur-[100px] rounded-full" />
+        <div className="absolute top-1/3 left-1/2 hidden h-[60vh] w-[60vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF4D00]/[0.04] blur-[120px] md:block" />
+        <div className="absolute bottom-1/4 right-1/4 hidden h-[30vh] w-[30vw] rounded-full bg-[#FF4D00]/[0.02] blur-[100px] md:block" />
       </div>
     </div>
   );

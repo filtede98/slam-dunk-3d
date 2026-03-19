@@ -442,7 +442,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
           <div data-pedestal-anchor="true" className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center my-2">
             {/* Pedestal glow */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] h-[2px] bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-16 bg-accent/[0.06] blur-2xl rounded-full" />
+            <div className="absolute bottom-0 left-1/2 hidden h-16 w-[60%] -translate-x-1/2 rounded-full bg-accent/[0.06] blur-2xl md:block" />
             {/* Subtle arc lines */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[80%] h-[40%] border border-white/[0.04] rounded-t-full border-b-0" />
           </div>
@@ -473,7 +473,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
           </div>
 
           {/* Bottom card: price, sizes, CTA */}
-          <div className="product-card reveal max-w-sm w-full bg-black/70 md:bg-black/50 backdrop-blur-sm md:backdrop-blur-xl p-5 rounded-[1.5rem] border border-white/[0.1]">
+          <div className="product-card reveal max-w-sm w-full bg-black/85 md:bg-black/50 backdrop-blur-none md:backdrop-blur-xl p-5 rounded-[1.5rem] border border-white/[0.1]">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="flex gap-1 mb-1">
