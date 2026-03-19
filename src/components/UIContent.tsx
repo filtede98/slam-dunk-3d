@@ -472,7 +472,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
           </div>
 
           {/* Bottom card: price, sizes, CTA */}
-          <div className="product-card reveal max-w-sm w-full bg-black/50 backdrop-blur-xl p-5 rounded-[1.5rem] border border-white/[0.1]">
+          <div className="product-card reveal max-w-sm w-full bg-black/70 md:bg-black/50 backdrop-blur-sm md:backdrop-blur-xl p-5 rounded-[1.5rem] border border-white/[0.1]">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="flex gap-1 mb-1">

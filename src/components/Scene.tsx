@@ -66,19 +66,21 @@ function CameraRig() {
   return null;
 }
 
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
 export default function Scene({ ballState, scrollProgress, activeVariant = 'classic', variantIndex = 0 }: SceneProps) {
   return (
     <div className="canvas-container" aria-hidden="true">
       <Canvas
-        shadows
+        shadows={!isMobile}
         gl={{
-          antialias: true,
+          antialias: !isMobile,
           alpha: true,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 0.9,
         }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.5] : [1, 2]}
         style={{ background: 'transparent' }}
       >
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
@@ -96,9 +98,9 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
             position={[4, 5, 4]}
             intensity={1.8}
             color="#FFAA66"
-            castShadow
-            shadow-mapSize-width={1024}
-            shadow-mapSize-height={1024}
+            castShadow={!isMobile}
+            shadow-mapSize-width={isMobile ? 512 : 1024}
+            shadow-mapSize-height={isMobile ? 512 : 1024}
           />
 
           {/* Fill light — very subtle, from the left */}
@@ -112,7 +114,7 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
           <pointLight position={[-2, 3, -5]} intensity={3} color="#FF4400" />
 
           <Basketball state={ballState} scrollProgress={scrollProgress} activeVariant={activeVariant} variantIndex={variantIndex} />
-          <Particles />
+          {!isMobile && <Particles />}
 
           <AdaptiveDpr pixelated />
         </Suspense>
