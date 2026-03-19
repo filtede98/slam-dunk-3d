@@ -510,7 +510,8 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
       </section>
 
       {/* ═══════════ SECTION 5: FOOTER ═══════════ */}
-      <footer id="footer-section" className="content-section items-center text-center pt-32 md:pt-48 pb-20">
+      <footer id="footer-section" className="scroll-section text-center bg-transparent" style={{ minHeight: '250vh' }}>
+        <div className="sticky-content flex-col items-center justify-center pt-32 md:pt-48 pb-20">
         <div className="parallax-text">
           <h2 className="text-6xl md:text-[clamp(4rem,10vw,10rem)] leading-[0.9] mb-14 reveal">
             PRONTO A
@@ -519,7 +520,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
           </h2>
         </div>
 
-        <div className="w-full max-w-md mb-24 reveal">
+        <div className="w-full max-w-md mb-24 reveal" style={{ transitionDelay: '0.4s' }}>
           <div className="relative">
             <input
               type="email"
@@ -575,6 +576,7 @@ export default function UIContent({ onAddToCart, onVariantChange, onSwipeVariant
 
         <div className="text-white/20 text-[10px] uppercase tracking-[0.3em]">
           © 2026 SLAM DUNK ATHLETICS — TUTTI I DIRITTI RISERVATI
+        </div>
         </div>
       </footer>
     </div>
