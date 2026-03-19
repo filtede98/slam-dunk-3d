@@ -248,18 +248,35 @@ export default function App() {
       };
     }
 
-    let trackedPedestalCenterY = window.innerHeight * (isMobile ? 0.48 : 0.46);
-
-    const measurePedestalCenterY = () => {
-      const pedestalEl = document.querySelector('[data-pedestal-anchor="true"]') as HTMLElement | null;
-      if (!pedestalEl) return;
-
-      const rect = pedestalEl.getBoundingClientRect();
+    // Pre-measure pedestal position within sticky content (doesn't change during sticky phase)
+    let pedestalOffsetInSticky = 0; // offset from top of sticky-content to pedestal center
+    const pedestalEl = document.querySelector('[data-pedestal-anchor="true"]') as HTMLElement | null;
+    const stickyContent = document.querySelector('#product-section .sticky-content') as HTMLElement | null;
+    if (pedestalEl && stickyContent) {
+      const pedestalRect = pedestalEl.getBoundingClientRect();
+      const stickyRect = stickyContent.getBoundingClientRect();
       const isMobileView = window.innerWidth < 768;
-      trackedPedestalCenterY = rect.top + rect.height * (isMobileView ? 0.4 : 0.38);
-    };
+      pedestalOffsetInSticky = (pedestalRect.top - stickyRect.top) + pedestalRect.height * (isMobileView ? 0.4 : 0.38);
+    }
 
-    measurePedestalCenterY();
+    // Calculate pedestal screen Y based on scroll progress (no DOM read during scroll)
+    const getPedestalScreenY = (progress: number) => {
+      const scrollY = progress * scrollable;
+      const productTop = productEl ? productEl.offsetTop : 0;
+      const stickyStart = productTop; // sticky kicks in when product section reaches top
+      const stickyEnd = productTop + (productEl ? productEl.offsetHeight : 0) - window.innerHeight;
+
+      if (scrollY >= stickyStart && scrollY <= stickyEnd) {
+        // During sticky phase: pedestal is fixed on screen
+        return pedestalOffsetInSticky;
+      } else if (scrollY > stickyEnd) {
+        // After sticky unpins: pedestal scrolls up with content
+        const overscroll = scrollY - stickyEnd;
+        return pedestalOffsetInSticky - overscroll;
+      }
+      // Before sticky: pedestal hasn't entered yet
+      return pedestalOffsetInSticky + (stickyStart - scrollY);
+    };
 
     // Convert screen Y position to Three.js Y coordinate
     // Camera is at z=5, fov=45 degrees
@@ -287,9 +304,8 @@ export default function App() {
 
           // During product section, track pedestal position (ball follows pedestal up)
           if (self.progress >= pStart && self.progress <= finalPedestalHold) {
-            // Re-measure pedestal position every frame during product section
-            measurePedestalCenterY();
-            const trackedY = screenYToThreeY(trackedPedestalCenterY, vals.z);
+            const pedestalScreenY = getPedestalScreenY(self.progress);
+            const trackedY = screenYToThreeY(pedestalScreenY, vals.z);
             // Blend in tracking over first 25% of product section for smooth entry from below
             const blendIn = Math.min(1, (self.progress - pStart) / ((pEnd - pStart) * 0.25));
             const smoothBlend = blendIn * blendIn * (3 - 2 * blendIn); // smooth step
@@ -310,11 +326,20 @@ export default function App() {
 
       // Immediately set correct position based on current scroll (avoids invisible ball on load)
       requestAnimationFrame(() => {
-        measurePedestalCenterY();
         const scrollable = mainRef.current!.scrollHeight - window.innerHeight;
         const initialProgress = scrollable > 0 ? window.scrollY / scrollable : 0;
         scrollProgress.current = initialProgress;
         const vals = lerpKeyframes(initialProgress);
+
+        // Apply pedestal tracking if in product section
+        if (initialProgress >= pStart && initialProgress <= finalPedestalHold) {
+          const pedestalScreenY = getPedestalScreenY(initialProgress);
+          const trackedY = screenYToThreeY(pedestalScreenY, vals.z);
+          const blendIn = Math.min(1, (initialProgress - pStart) / ((pEnd - pStart) * 0.25));
+          const smoothBlend = blendIn * blendIn * (3 - 2 * blendIn);
+          vals.y = vals.y * (1 - smoothBlend) + trackedY * smoothBlend;
+        }
+
         ballState.current.x = vals.x;
         ballState.current.y = vals.y;
         ballState.current.z = vals.z;
@@ -324,12 +349,9 @@ export default function App() {
         ballState.current.rotZ = vals.rotZ;
         ballState.current.visible = true;
       });
-
-      window.addEventListener('resize', measurePedestalCenterY);
     }, mainRef);
 
     return () => {
-      window.removeEventListener('resize', measurePedestalCenterY);
       ctx.revert();
     };
   }, []);
