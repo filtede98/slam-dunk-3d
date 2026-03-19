@@ -88,8 +88,8 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 2 / maxDim;
-    const prefersDesktopAssets = shouldPreferDesktopAssetsOnMobile();
-    const anisotropy = Math.min(prefersDesktopAssets ? 16 : 12, gl.capabilities.getMaxAnisotropy());
+    const premiumQuality = typeof window === 'undefined' || window.innerWidth >= 768 || shouldPreferDesktopAssetsOnMobile();
+    const anisotropy = Math.min(premiumQuality ? 16 : 12, gl.capabilities.getMaxAnisotropy());
 
     cloned.position.sub(center);
     cloned.scale.setScalar(scale);
@@ -98,13 +98,14 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         mesh.castShadow = true;
+        mesh.receiveShadow = true;
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
           mesh.material.map && (mesh.material.map.anisotropy = anisotropy);
           mesh.material.normalMap && (mesh.material.normalMap.anisotropy = anisotropy);
           mesh.material.metalnessMap && (mesh.material.metalnessMap.anisotropy = anisotropy);
           mesh.material.roughnessMap && (mesh.material.roughnessMap.anisotropy = anisotropy);
-          mesh.material.roughness = Math.max(mesh.material.roughness, prefersDesktopAssets ? 0.55 : 0.6);
-          mesh.material.envMapIntensity = prefersDesktopAssets ? 0.75 : 0.6;
+          mesh.material.roughness = Math.max(mesh.material.roughness, premiumQuality ? 0.55 : 0.6);
+          mesh.material.envMapIntensity = premiumQuality ? 0.9 : 0.6;
           mesh.material.needsUpdate = true;
         }
       }
