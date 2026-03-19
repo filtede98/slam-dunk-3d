@@ -287,7 +287,7 @@ function MobileFrameController({ scrollProgress }: { scrollProgress?: React.RefO
       const customEvent = event as CustomEvent<{ durationMs?: number }>;
       startBurst(customEvent.detail?.durationMs ?? 500);
     };
-    const onCartAnimation = () => startBurst(1800);
+    const onCartAnimation = () => startBurst(4000);
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         startBurst(240);

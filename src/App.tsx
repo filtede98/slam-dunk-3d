@@ -165,6 +165,8 @@ export default function App() {
         ease: 'elastic.out(1.2, 0.35)',
         onComplete: () => {
           (window as any).__cartAnimating = false;
+          // Trigger extra render burst for idle rotation on mobile
+          window.dispatchEvent(new CustomEvent('variant-changed', { detail: { durationMs: 2000 } }));
         },
       });
     });
