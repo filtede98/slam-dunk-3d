@@ -106,7 +106,7 @@ function makeDracoCallback(loader: GLTFLoader) {
 }
 
 // Individual ball model — each has its own position offset, scale, opacity, and rotation
-function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgress, rotationRef }: {
+function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgress, rotationRef, opacity }: {
   url: string;
   xOffset: number;
   zOffset: number;
@@ -114,6 +114,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
   isActive: boolean;
   scrollProgress: React.RefObject<number>;
   rotationRef: React.RefObject<{ x: number; y: number; z: number }>;
+  opacity?: React.RefObject<number>;
 }) {
   const wrapperRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
@@ -168,6 +169,8 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
           }
           mesh.material.roughness = Math.max(mesh.material.roughness, premiumQuality ? 0.55 : 0.65);
           mesh.material.envMapIntensity = premiumQuality ? 0.9 : 0.4;
+          // Enable transparency for fade transitions
+          mesh.material.transparent = true;
           mesh.material.needsUpdate = true;
         }
       }
@@ -235,6 +238,22 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     wrapperRef.current.scale.setScalar(currentScale.current);
     wrapperRef.current.visible = !isMobileView || isActive || currentScale.current > 0.001;
 
+    // Apply fade opacity on mobile
+    if (isMobileView && opacity) {
+      const targetOpacity = opacity.current ?? 1;
+      scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          materials.forEach((mat) => {
+            if (mat instanceof THREE.MeshStandardMaterial) {
+              mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, 0.15);
+            }
+          });
+        }
+      });
+    }
+
     // Apply shared rotation to each ball individually
     if (rotationRef.current) {
       spinRef.current.rotation.x = rotationRef.current.x;
@@ -248,6 +267,12 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
       <group ref={spinRef} />
     </group>
   );
+}
+
+// Preloader: silently loads a GLB in background without rendering anything
+function SilentPreloader({ url }: { url: string }) {
+  useLoader(GLTFLoader, url, makeDracoCallback);
+  return null;
 }
 
 // Calculate circular distance between two indices
@@ -265,42 +290,56 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
   const sharedRotation = useRef({ x: 0, y: 0, z: 0 });
   const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
 
+  // Opacity ref for fade transition on mobile
+  const ballOpacity = useRef(1);
+  // Track previous variant to detect changes
+  const prevVariantIndex = useRef(variantIndex);
+  // Whether we're currently fading in (new ball just mounted)
+  const isFadingIn = useRef(false);
+
   const modelUrls = useMemo(() =>
     BALL_VARIANTS.map(v => getVariantModel(v, isMobileDevice)),
     [isMobileDevice]
   );
 
-  // Track the previous variant index to evict its cache on mobile
-  const prevVariantIndex = useRef(variantIndex);
+  // Indices of adjacent balls to preload on mobile
+  const preloadIndices = useMemo(() => {
+    if (!isMobileDevice) return [];
+    const total = BALL_VARIANTS.length;
+    const prev = (variantIndex - 1 + total) % total;
+    const next = (variantIndex + 1) % total;
+    // Deduplicate and exclude active
+    return [...new Set([prev, next])].filter(i => i !== variantIndex);
+  }, [variantIndex, isMobileDevice]);
 
-  // On mobile: evict the R3F useLoader cache for the old model when switching variants.
-  // This frees the raw GLTF data (textures, buffers) that useLoader keeps in memory.
+  // On variant change: start fade-in for new ball
   useEffect(() => {
     if (!isMobileDevice) return;
-
-    const prevIdx = prevVariantIndex.current;
-    prevVariantIndex.current = variantIndex;
-
-    if (prevIdx !== variantIndex) {
-      // Defer cache eviction to next frame so unmount dispose runs first
-      requestAnimationFrame(() => {
-        const oldUrl = modelUrls[prevIdx];
-        if (oldUrl) {
-          useLoader.clear(GLTFLoader, oldUrl);
-        }
-      });
+    if (prevVariantIndex.current !== variantIndex) {
+      prevVariantIndex.current = variantIndex;
+      // Start opacity at 0 and animate to 1
+      ballOpacity.current = 0;
+      isFadingIn.current = true;
     }
-  }, [variantIndex, isMobileDevice, modelUrls]);
+  }, [variantIndex, isMobileDevice]);
 
-  // Preload: on desktop all models immediately, on mobile don't preload (load on demand only)
+  // Animate opacity to 1 when fading in
   useEffect(() => {
-    if (isMobileDevice) return;
-
-    // Desktop: preload all immediately
-    modelUrls.forEach((url) => {
-      useLoader.preload(GLTFLoader, url, makeDracoCallback);
-    });
-  }, [modelUrls, isMobileDevice]);
+    if (!isMobileDevice || !isFadingIn.current) return;
+    let raf: number;
+    const animate = () => {
+      ballOpacity.current = Math.min(1, ballOpacity.current + 0.06);
+      if (ballOpacity.current < 1) {
+        raf = requestAnimationFrame(animate);
+        // Trigger a render burst
+        window.dispatchEvent(new CustomEvent('variant-changed', { detail: { durationMs: 800 } }));
+      } else {
+        isFadingIn.current = false;
+      }
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [variantIndex, isMobileDevice]);
 
   useEffect(() => {
     if (!groupRef.current || !state.current) return;
@@ -385,6 +424,24 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
     sharedRotation.current.z = THREE.MathUtils.lerp(sharedRotation.current.z, targetRotZ, lerp);
   });
 
+  // Preload all models on desktop; on mobile preload only active + adjacent
+  useEffect(() => {
+    if (isMobileDevice) {
+      // Preload active + adjacent (prev/next) with a small delay to not block first render
+      const timer = setTimeout(() => {
+        [variantIndex, ...preloadIndices].forEach((i) => {
+          useLoader.preload(GLTFLoader, modelUrls[i], makeDracoCallback);
+        });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+
+    // Desktop: preload all immediately
+    modelUrls.forEach((url) => {
+      useLoader.preload(GLTFLoader, url, makeDracoCallback);
+    });
+  }, [modelUrls, isMobileDevice, variantIndex, preloadIndices]);
+
   // On mobile, render only the active variant to minimize scroll-time GPU cost.
   const variantsToRender = isMobileDevice
     ? BALL_VARIANTS.filter((_, i) => i === variantIndex)
@@ -404,9 +461,14 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
             isActive={i === variantIndex}
             scrollProgress={scrollProgress!}
             rotationRef={sharedRotation}
+            opacity={isMobileDevice ? ballOpacity : undefined}
           />
         );
       })}
+      {/* Silent preloaders for adjacent balls on mobile */}
+      {isMobileDevice && preloadIndices.map((i) => (
+        <SilentPreloader key={`preload-${i}`} url={modelUrls[i]} />
+      ))}
     </group>
   );
 }

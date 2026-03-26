@@ -76,11 +76,11 @@ function getRendererProfile(): RendererProfile {
     dpr: isMobile
       ? (isLowEndMobile ? 1 : [1, Math.min(devicePixelRatio, isAppleMobile ? 2 : 1.5)])
       : [1, Math.min(devicePixelRatio, 2)],
-    ambientIntensity: isMobile ? 0.25 : 0.15,
-    envIntensity: isMobile ? 0.15 : 0.3,
+    ambientIntensity: isMobile ? 0.4 : 0.15,
+    envIntensity: isMobile ? 0.35 : 0.3,
     shadowMapSize: isMobile ? 512 : 1024,
     showParticles: !isMobile,
-    showEnvironment: !isMobile || preferDesktopAssetsOnMobile,
+    showEnvironment: true,
   };
 }
 
@@ -351,10 +351,10 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
             alpha: true,
             powerPreference: 'high-performance',
             toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: profile.isMobile ? (profile.preferDesktopAssetsOnMobile ? 0.92 : 1) : 0.9,
+            toneMappingExposure: profile.isMobile ? (profile.preferDesktopAssetsOnMobile ? 0.92 : 1.05) : 0.9,
           }}
           dpr={activeDpr}
-          frameloop={profile.isMobile ? 'demand' : 'always'}
+          frameloop="always"
           performance={{ min: profile.isLowEndMobile ? 0.6 : 0.8 }}
           style={{ background: 'transparent' }}
         >
@@ -362,35 +362,32 @@ export default function Scene({ ballState, scrollProgress, activeVariant = 'clas
           <CameraRig isMobile={profile.isMobile} />
           {profile.isMobile && <MobileFrameController scrollProgress={scrollProgress} />}
 
-          <Suspense fallback={null}>
-            {profile.showEnvironment && <Environment preset="studio" environmentIntensity={profile.envIntensity} />}
+          <Suspense fallback={<></>}>
+            <Environment preset="studio" environmentIntensity={profile.envIntensity} />
 
             <ambientLight intensity={profile.ambientIntensity} />
 
             <directionalLight
               position={[4, 5, 4]}
-              intensity={profile.isMobile ? (profile.isLowEndMobile ? 1.5 : (profile.preferDesktopAssetsOnMobile ? 1.8 : 1.75)) : 1.8}
+              intensity={profile.isMobile ? (profile.isLowEndMobile ? 1.8 : 2.2) : 1.8}
               color="#FFAA66"
               castShadow={activeShadows}
               shadow-mapSize-width={profile.shadowMapSize}
               shadow-mapSize-height={profile.shadowMapSize}
             />
 
-            {!profile.isLowEndMobile && (
-              <directionalLight
-                position={[-4, 1, 2]}
-                intensity={0.4}
-                color="#FF9955"
-              />
-            )}
+            {/* Fill light from left — always on, stronger on mobile */}
+            <directionalLight
+              position={[-4, 1, 2]}
+              intensity={profile.isMobile ? 0.8 : 0.4}
+              color="#FF9955"
+            />
 
-            {!profile.isLowEndMobile && (
-              <pointLight position={[-2, 3, -5]} intensity={profile.isMobile ? 2.6 : 3} color="#FF4400" />
-            )}
+            {/* Rim light from behind — always on */}
+            <pointLight position={[-2, 3, -5]} intensity={profile.isMobile ? 3.5 : 3} color="#FF4400" />
 
-            {profile.preferDesktopAssetsOnMobile && (
-              <pointLight position={[2.5, -1.5, 3]} intensity={1.2} color="#fff1d9" />
-            )}
+            {/* Bottom fill — always on mobile for better roundness */}
+            <pointLight position={[2.5, -1.5, 3]} intensity={profile.isMobile ? 1.8 : 1.2} color="#fff1d9" />
 
             <Basketball state={ballState} scrollProgress={scrollProgress} activeVariant={activeVariant} variantIndex={variantIndex} />
             {profile.showParticles && <Particles />}

@@ -9,7 +9,7 @@ import { BALL_VARIANTS } from './constants';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const MOBILE_VARIANT_RENDER_DURATION = 600;
+const MOBILE_VARIANT_RENDER_DURATION = 1500;
 
 export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
