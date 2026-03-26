@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
@@ -74,6 +74,37 @@ function getVariantModel(variant: (typeof BALL_VARIANTS)[number], isMobile: bool
     : variant.mobileModel ?? variant.model;
 }
 
+// Fully dispose a GLTF scene's GPU resources
+function disposeGltfScene(scene: THREE.Object3D) {
+  scene.traverse((child) => {
+    if ((child as THREE.Mesh).isMesh) {
+      const mesh = child as THREE.Mesh;
+      mesh.geometry?.dispose();
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      materials.forEach((mat) => {
+        if (mat && 'dispose' in mat) {
+          // Dispose all texture maps
+          for (const key of Object.keys(mat)) {
+            const value = (mat as Record<string, unknown>)[key];
+            if (value instanceof THREE.Texture) {
+              value.dispose();
+            }
+          }
+          (mat as THREE.Material).dispose();
+        }
+      });
+    }
+  });
+}
+
+// Create a shared DRACOLoader instance to avoid re-creating it
+const sharedDracoLoader = new DRACOLoader();
+sharedDracoLoader.setDecoderPath('/draco/');
+
+function makeDracoCallback(loader: GLTFLoader) {
+  loader.setDRACOLoader(sharedDracoLoader);
+}
+
 // Individual ball model — each has its own position offset, scale, opacity, and rotation
 function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgress, rotationRef }: {
   url: string;
@@ -92,11 +123,7 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
   const currentZ = useRef(isActive ? zOffset : 0);
   const currentScale = useRef(isActive ? scaleFactor : 0);
 
-  const gltf = useLoader(GLTFLoader, url, (loader) => {
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
-    loader.setDRACOLoader(dracoLoader);
-  });
+  const gltf = useLoader(GLTFLoader, url, makeDracoCallback);
 
   const scene = useMemo(() => {
     const cloned = gltf.scene.clone(true);
@@ -111,11 +138,13 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
     cloned.position.sub(center);
     cloned.scale.setScalar(scale);
 
+    const isMobileView = typeof window !== 'undefined' && window.innerWidth < 768;
+
     cloned.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        mesh.castShadow = !isMobileView;
+        mesh.receiveShadow = !isMobileView;
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
           if (mesh.material.map) {
             mesh.material.map.anisotropy = anisotropy;
@@ -153,6 +182,13 @@ function BallModel({ url, xOffset, zOffset, scaleFactor, isActive, scrollProgres
       spinRef.current.remove(spinRef.current.children[0]);
     }
     spinRef.current.add(scene);
+  }, [scene]);
+
+  // Dispose cloned scene GPU resources on unmount
+  useEffect(() => {
+    return () => {
+      disposeGltfScene(scene);
+    };
   }, [scene]);
 
   useEffect(() => {
@@ -234,22 +270,37 @@ export default function Basketball({ state, scrollProgress, activeVariant = 'cla
     [isMobileDevice]
   );
 
+  // Track the previous variant index to evict its cache on mobile
+  const prevVariantIndex = useRef(variantIndex);
+
+  // On mobile: evict the R3F useLoader cache for the old model when switching variants.
+  // This frees the raw GLTF data (textures, buffers) that useLoader keeps in memory.
   useEffect(() => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const delay = isMobile ? 3500 : 0;
+    if (!isMobileDevice) return;
 
-    const timeout = setTimeout(() => {
-      modelUrls.forEach((url) => {
-        useLoader.preload(GLTFLoader, url, (loader) => {
-          const dracoLoader = new DRACOLoader();
-          dracoLoader.setDecoderPath('/draco/');
-          loader.setDRACOLoader(dracoLoader);
-        });
+    const prevIdx = prevVariantIndex.current;
+    prevVariantIndex.current = variantIndex;
+
+    if (prevIdx !== variantIndex) {
+      // Defer cache eviction to next frame so unmount dispose runs first
+      requestAnimationFrame(() => {
+        const oldUrl = modelUrls[prevIdx];
+        if (oldUrl) {
+          useLoader.clear(GLTFLoader, oldUrl);
+        }
       });
-    }, delay);
+    }
+  }, [variantIndex, isMobileDevice, modelUrls]);
 
-    return () => clearTimeout(timeout);
-  }, [modelUrls]);
+  // Preload: on desktop all models immediately, on mobile don't preload (load on demand only)
+  useEffect(() => {
+    if (isMobileDevice) return;
+
+    // Desktop: preload all immediately
+    modelUrls.forEach((url) => {
+      useLoader.preload(GLTFLoader, url, makeDracoCallback);
+    });
+  }, [modelUrls, isMobileDevice]);
 
   useEffect(() => {
     if (!groupRef.current || !state.current) return;
